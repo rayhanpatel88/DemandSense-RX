@@ -1,10 +1,11 @@
-"""LightGBM demand forecasting model with quantile regression for intervals."""
+"""LightGBM demand forecasting model with residual-based intervals."""
 
 import numpy as np
 import pandas as pd
 import joblib
 from pathlib import Path
 import lightgbm as lgb
+from scipy import stats
 
 from src.models.base import BaseForecaster
 from src.utils.logger import get_logger
@@ -13,12 +14,12 @@ logger = get_logger(__name__)
 
 
 class LGBMForecaster(BaseForecaster):
-    """LightGBM forecaster with 80% prediction intervals via quantile regression."""
+    """LightGBM forecaster with fast residual-based prediction intervals."""
 
     def __init__(self, config: dict):
         cfg = config["models"]["lgbm"]
         self.params_base = {
-            "n_estimators": cfg.get("n_estimators", 300),
+            "n_estimators": cfg.get("n_estimators", 120),
             "learning_rate": cfg.get("learning_rate", 0.05),
             "max_depth": cfg.get("max_depth", 6),
             "num_leaves": cfg.get("num_leaves", 31),
@@ -31,8 +32,11 @@ class LGBMForecaster(BaseForecaster):
             "n_jobs": -1,
         }
         self.quantiles = config["forecasting"].get("quantiles", [0.1, 0.5, 0.9])
-        self._models: dict = {}  # keyed by quantile or "point"
+        self._models: dict = {}  # keyed by "point"
         self.feature_cols_: list = []
+        self.interval_z_ = float(stats.norm.ppf(max(self.quantiles)))
+        self.global_residual_std_ = 1.0
+        self.sku_residual_std_: dict = {}
 
     def fit(self, df: pd.DataFrame, feature_cols: list, target_col: str = "demand"):
         self.feature_cols_ = feature_cols
@@ -44,19 +48,15 @@ class LGBMForecaster(BaseForecaster):
         point_params = {**self.params_base, "objective": "regression", "metric": "rmse"}
         self._models["point"] = lgb.LGBMRegressor(**point_params)
         self._models["point"].fit(X, y)
-
-        # Quantile models for prediction intervals
-        for q in self.quantiles:
-            logger.info(f"Training quantile model q={q}")
-            q_params = {
-                **self.params_base,
-                "objective": "quantile",
-                "alpha": q,
-                "metric": "quantile",
-            }
-            model = lgb.LGBMRegressor(**q_params)
-            model.fit(X, y)
-            self._models[q] = model
+        fitted = np.clip(self._models["point"].predict(X), 0, None)
+        residuals = np.abs(y - fitted)
+        self.global_residual_std_ = float(np.std(residuals)) if len(residuals) > 1 else 1.0
+        self.sku_residual_std_ = {}
+        temp = df[["sku"]].copy()
+        temp["residual"] = residuals
+        for sku, group in temp.groupby("sku"):
+            std = float(np.std(group["residual"].values)) if len(group) > 1 else self.global_residual_std_
+            self.sku_residual_std_[sku] = max(std, self.global_residual_std_ * 0.35, 1.0)
 
         logger.info("LGBMForecaster training complete")
         return self
@@ -71,15 +71,14 @@ class LGBMForecaster(BaseForecaster):
     ) -> pd.DataFrame:
         X = df[feature_cols]
         point = np.clip(self._models["point"].predict(X), 0, None)
-
-        q_low = min(self.quantiles)
-        q_high = max(self.quantiles)
-        lower = np.clip(self._models[q_low].predict(X), 0, None)
-        upper = np.clip(self._models[q_high].predict(X), 0, None)
-
-        # Ensure lower <= point <= upper
-        lower = np.minimum(lower, point)
-        upper = np.maximum(upper, point)
+        residual_std = (
+            df["sku"].map(self.sku_residual_std_).fillna(self.global_residual_std_).astype(float).values
+            if "sku" in df.columns
+            else np.full(len(df), self.global_residual_std_, dtype=float)
+        )
+        width = np.maximum(self.interval_z_ * residual_std, 1.0)
+        lower = np.clip(point - width, 0, None)
+        upper = point + width
 
         return pd.DataFrame({"forecast": point, "lower": lower, "upper": upper},
                             index=df.index)

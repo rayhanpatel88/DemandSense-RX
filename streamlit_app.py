@@ -38,7 +38,7 @@ forecast_total = int(future_df["forecast"].sum())
 reorder_count = int(inventory_df["reorder_needed"].sum())
 high_risk = int(inventory_df["stockout_risk"].isin(["critical", "high"]).sum())
 reliability_score = reliability_df["reliability_score"].mean() if not reliability_df.empty else 0.0
-wape = float(backtest_summary.loc["LightGBM", "WAPE"]) if "LightGBM" in backtest_summary.index else 0.0
+wape = float(data["holdout_metrics"].get("WAPE", 0.0))
 
 st.markdown(
     f"""

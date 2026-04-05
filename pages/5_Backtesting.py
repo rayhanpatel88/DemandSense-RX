@@ -10,16 +10,17 @@ import plotly.graph_objects as go
 import streamlit as st
 
 try:
-    from src.app.ui import apply_page_config, get_pipeline_data, render_header, render_sidebar, style_plotly
+    from src.app.ui import apply_page_config, get_backtesting_data, get_pipeline_data, render_header, render_sidebar, style_plotly
 except ImportError:
     project_root = Path(__file__).resolve().parents[1]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-    from src.app.ui import apply_page_config, get_pipeline_data, render_header, render_sidebar, style_plotly
+    from src.app.ui import apply_page_config, get_backtesting_data, get_pipeline_data, render_header, render_sidebar, style_plotly
 
 apply_page_config("Backtesting")
-data = get_pipeline_data()
-render_sidebar("backtesting", data)
+base_data = get_pipeline_data()
+render_sidebar("backtesting", base_data)
+data = get_backtesting_data()
 
 summary = data["backtest_results"]["summary"]
 by_sku = data["backtest_results"]["by_sku"]

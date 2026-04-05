@@ -15,7 +15,7 @@ forecasting:
 
 models:
   lgbm:
-    n_estimators: 300
+    n_estimators: 120
     learning_rate: 0.05
     max_depth: 6
     num_leaves: 31

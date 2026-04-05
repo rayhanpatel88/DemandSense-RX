@@ -7,6 +7,7 @@ from typing import Optional
 
 from src.data.loader import load_or_generate
 from src.evaluation.backtesting import RollingBacktester
+from src.evaluation.metrics import compute_all_metrics
 from src.features.engineer import build_future_exogenous_frame, create_features, get_feature_cols
 from src.forecasting.recursive import RecursiveForecaster
 from src.forecasting.reliability import ReliabilityScorer
@@ -19,7 +20,11 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def run_pipeline(config: Optional[dict] = None) -> dict:
+def run_pipeline(
+    config: Optional[dict] = None,
+    include_backtesting: bool = False,
+    include_shap: bool = False,
+) -> dict:
     config = config or load_config()
     raw_df = load_or_generate(config)
     featured_df = create_features(raw_df, config)
@@ -53,12 +58,7 @@ def run_pipeline(config: Optional[dict] = None) -> dict:
     future_df["is_future"] = True
     future_df["horizon_day"] = future_df.groupby("sku").cumcount() + 1
 
-    backtester = RollingBacktester(n_splits=4, test_size=30)
-    backtest_results = backtester.run(raw_df, {lgbm.name: lgbm, ma.name: ma, sn.name: sn}, config)
-
-    lgbm_backtest = backtest_results["predictions"]
-    lgbm_backtest = lgbm_backtest[lgbm_backtest["model"] == lgbm.name].copy() if not lgbm_backtest.empty else pd.DataFrame()
-    reliability = ReliabilityScorer(config).score(lgbm_backtest)
+    reliability = ReliabilityScorer(config).score(test_df)
     test_df = test_df.merge(reliability, on="sku", how="left")
     future_df = future_df.merge(reliability, on="sku", how="left")
 
@@ -67,8 +67,13 @@ def run_pipeline(config: Optional[dict] = None) -> dict:
     stockout_timeline = inventory_engine.compute_stockout_timeline(raw_df, future_df)
     slotting_df = _build_slotting_plan(future_df, inventory_df)
 
-    shap_data = _compute_shap(lgbm, train_df, feature_cols)
+    shap_data = _compute_shap(lgbm, train_df, feature_cols) if include_shap else {}
     feature_importance = lgbm.get_feature_importance()
+    holdout_metrics = compute_all_metrics(test_df["demand"].values, test_df["forecast"].values) if not test_df.empty else {}
+    backtest_results = {"summary": pd.DataFrame(), "by_sku": pd.DataFrame(), "predictions": pd.DataFrame()}
+    if include_backtesting:
+        backtester = RollingBacktester(n_splits=2, test_size=21)
+        backtest_results = backtester.run(raw_df, {lgbm.name: lgbm, ma.name: ma, sn.name: sn}, config)
 
     return {
         "config": config,
@@ -85,6 +90,7 @@ def run_pipeline(config: Optional[dict] = None) -> dict:
         "inventory_df": inventory_df,
         "stockout_timeline": stockout_timeline,
         "backtest_results": backtest_results,
+        "holdout_metrics": holdout_metrics,
         "reliability_df": reliability,
         "slotting_df": slotting_df,
         "shap_data": shap_data,

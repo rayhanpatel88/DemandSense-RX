@@ -10,18 +10,19 @@ import plotly.graph_objects as go
 import streamlit as st
 
 try:
-    from src.app.ui import apply_page_config, get_pipeline_data, render_header, render_sidebar, style_plotly
+    from src.app.ui import apply_page_config, get_explainability_data, get_pipeline_data, render_header, render_sidebar, style_plotly
 except ImportError:
     project_root = Path(__file__).resolve().parents[1]
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
-    from src.app.ui import apply_page_config, get_pipeline_data, render_header, render_sidebar, style_plotly
+    from src.app.ui import apply_page_config, get_explainability_data, get_pipeline_data, render_header, render_sidebar, style_plotly
 
 apply_page_config("Explainability")
-data = get_pipeline_data()
-render_sidebar("explainability", data)
+base_data = get_pipeline_data()
+render_sidebar("explainability", base_data)
+data = get_explainability_data()
 
-shap_data = data["shap_data"]
+shap_data = data.get("shap_data", {})
 feature_importance = data["feature_importance"]
 
 with st.sidebar:

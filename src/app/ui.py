@@ -41,7 +41,23 @@ def get_pipeline_data() -> dict:
     from src.pipeline import run_pipeline
     from src.utils.config import load_config
 
-    return run_pipeline(load_config())
+    return run_pipeline(load_config(), include_backtesting=False, include_shap=False)
+
+
+@st.cache_resource(show_spinner="Running backtesting analysis...")
+def get_backtesting_data() -> dict:
+    from src.pipeline import run_pipeline
+    from src.utils.config import load_config
+
+    return run_pipeline(load_config(), include_backtesting=True, include_shap=False)
+
+
+@st.cache_resource(show_spinner="Computing explainability artifacts...")
+def get_explainability_data() -> dict:
+    from src.pipeline import run_pipeline
+    from src.utils.config import load_config
+
+    return run_pipeline(load_config(), include_backtesting=False, include_shap=True)
 
 
 def apply_page_config(page_title: str) -> None:
