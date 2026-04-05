@@ -11,6 +11,8 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+from typing import cast
+from streamlit.delta_generator import DeltaGenerator
 
 from src.utils.config import load_config
 from src.pipeline import run_pipeline
@@ -90,7 +92,11 @@ lgbm_wape = accuracy_wape["WAPE"]["LightGBM"] if "LightGBM" in accuracy_wape.ind
 avg_accuracy = round(100 - lgbm_wape, 1)
 reorder_count = int(inventory_df["reorder_needed"].sum())
 
-col1, col2, col3, col4 = st.columns(4)
+_kpi_cols = st.columns(4)
+col1 = cast(DeltaGenerator, _kpi_cols[0])
+col2 = cast(DeltaGenerator, _kpi_cols[1])
+col3 = cast(DeltaGenerator, _kpi_cols[2])
+col4 = cast(DeltaGenerator, _kpi_cols[3])
 with col1:
     st.markdown(f"""
     <div class="metric-card">
@@ -123,16 +129,18 @@ with col4:
 st.markdown("<br>", unsafe_allow_html=True)
 
 # ── Row 2: Charts ─────────────────────────────────────────────────────────────
-col_left, col_right = st.columns([3, 2])
+_row2_cols = st.columns([3, 2])
+col_left = _row2_cols[0]
+col_right = _row2_cols[1]
 
 with col_left:
     st.subheader("Total Demand: Historical vs Forecast")
-    hist_agg = (raw_df.groupby("date")["demand"].sum().reset_index()
-                .rename(columns={"demand": "value"}))
+    hist_agg = raw_df.groupby("date")["demand"].sum().reset_index()
+    hist_agg.rename(columns={"demand": "value"}, inplace=True)
     hist_agg["type"] = "Historical"
 
-    fcst_agg = (future_df.groupby("date")["forecast"].sum().reset_index()
-                .rename(columns={"forecast": "value"}))
+    fcst_agg = future_df.groupby("date")["forecast"].sum().reset_index()
+    fcst_agg.rename(columns={"forecast": "value"}, inplace=True)
     fcst_agg["type"] = "Forecast"
 
     combined = pd.concat([hist_agg.tail(180), fcst_agg], ignore_index=True)
@@ -144,7 +152,7 @@ with col_left:
         legend_title_text="", margin=dict(l=0, r=0, t=10, b=0),
         xaxis_title="", yaxis_title="Units",
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, on_select="ignore")
 
 with col_right:
     st.subheader("Stockout Risk Distribution")
@@ -180,7 +188,7 @@ def colour_risk(val):
     return colours.get(val, "")
 
 st.dataframe(
-    risky.style.applymap(colour_risk, subset=["stockout_risk"]),
+    risky.style.map(colour_risk, subset=["stockout_risk"]),
     use_container_width=True,
     hide_index=True,
 )

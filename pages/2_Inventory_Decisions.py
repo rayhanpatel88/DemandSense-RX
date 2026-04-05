@@ -96,8 +96,8 @@ def style_reorder(val):
 styled = (
     filtered[display_cols]
     .style
-    .applymap(style_risk, subset=["stockout_risk"])
-    .applymap(style_reorder, subset=["reorder_needed"])
+    .map(style_risk, subset=["stockout_risk"])
+    .map(style_reorder, subset=["reorder_needed"])
     .format({"mean_daily_demand": "{:.1f}", "days_to_stockout": "{:.1f}",
              "current_stock": "{:.0f}", "safety_stock": "{:.0f}",
              "reorder_point": "{:.0f}", "reorder_qty": "{:.0f}",

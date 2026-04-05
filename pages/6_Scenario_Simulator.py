@@ -208,6 +208,6 @@ risk_color_map = {
 
 st.dataframe(
     scenario_display.style
-    .applymap(lambda v: risk_color_map.get(v, ""), subset=["stockout_risk"]),
+    .map(lambda v: risk_color_map.get(v, ""), subset=["stockout_risk"]),
     use_container_width=True, hide_index=True, height=350,
 )

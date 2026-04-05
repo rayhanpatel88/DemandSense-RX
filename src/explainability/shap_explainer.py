@@ -24,7 +24,7 @@ class SHAPExplainer:
         if len(sample) > max_samples:
             sample = sample.sample(max_samples, random_state=42)
         self.sample_df_ = sample.reset_index(drop=True)
-        X = self.sample_df_[self.feature_cols].values
+        X = self.sample_df_[self.feature_cols]
         logger.info(f"Computing SHAP values for {len(X)} samples")
         self.shap_values_ = self.explainer.shap_values(X)
         return self

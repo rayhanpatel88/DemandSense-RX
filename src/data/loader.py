@@ -55,7 +55,7 @@ def _fill_date_gaps(df: pd.DataFrame) -> pd.DataFrame:
     for sku, group in df.groupby("sku"):
         date_range = pd.date_range(group["date"].min(), group["date"].max(), freq="D")
         group = group.set_index("date").reindex(date_range).reset_index()
-        group.rename(columns={"index": "date"}, inplace=True)
+        group.rename(columns={"index": "date"}, inplace=True, errors="ignore")
         group["sku"] = sku
         group["demand"] = group["demand"].fillna(0)
         group["promotion"] = group["promotion"].fillna(0).astype(int)

@@ -36,7 +36,7 @@ class LGBMForecaster(BaseForecaster):
 
     def fit(self, df: pd.DataFrame, feature_cols: list, target_col: str = "demand"):
         self.feature_cols_ = feature_cols
-        X = df[feature_cols].values
+        X = df[feature_cols]
         y = df[target_col].values
 
         # Point forecast model (RMSE objective)
@@ -62,14 +62,14 @@ class LGBMForecaster(BaseForecaster):
         return self
 
     def predict(self, df: pd.DataFrame, feature_cols: list) -> np.ndarray:
-        X = df[feature_cols].values
+        X = df[feature_cols]
         preds = self._models["point"].predict(X)
         return np.clip(preds, 0, None)
 
     def predict_with_intervals(
         self, df: pd.DataFrame, feature_cols: list
     ) -> pd.DataFrame:
-        X = df[feature_cols].values
+        X = df[feature_cols]
         point = np.clip(self._models["point"].predict(X), 0, None)
 
         q_low = min(self.quantiles)
