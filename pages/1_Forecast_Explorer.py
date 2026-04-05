@@ -2,20 +2,41 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.app.ui import (
-    apply_page_config,
-    compact_legend,
-    dense_dataframe,
-    get_pipeline_data,
-    metric_panel,
-    render_header,
-    render_sidebar,
-    status_rail,
-    style_plotly,
-)
+try:
+    from src.app.ui import (
+        apply_page_config,
+        compact_legend,
+        dense_dataframe,
+        get_pipeline_data,
+        metric_panel,
+        render_header,
+        render_sidebar,
+        segmented_control,
+        status_rail,
+        style_plotly,
+    )
+except ImportError:
+    project_root = Path(__file__).resolve().parents[1]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    from src.app.ui import (
+        apply_page_config,
+        compact_legend,
+        dense_dataframe,
+        get_pipeline_data,
+        metric_panel,
+        render_header,
+        render_sidebar,
+        segmented_control,
+        status_rail,
+        style_plotly,
+    )
 
 apply_page_config("Forecast Explorer")
 data = get_pipeline_data()
@@ -29,7 +50,7 @@ reliability_df = data["reliability_df"]
 with st.sidebar:
     st.divider()
     selected_sku = st.selectbox("SKU", sorted(raw_df["sku"].unique()))
-    horizon = st.segmented_control("Horizon", options=[7, 30], default=30)
+    horizon = segmented_control("Horizon", options=[7, 30], default=30)
     history_days = st.slider("History window", 90, 365, 180, step=15)
     show_bands = st.toggle("Show prediction bands", value=True)
 

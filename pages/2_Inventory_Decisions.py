@@ -2,21 +2,40 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from src.app.ui import (
-    apply_page_config,
-    compact_legend,
-    dense_dataframe,
-    get_pipeline_data,
-    metric_panel,
-    render_header,
-    render_sidebar,
-    status_rail,
-    style_plotly,
-)
+try:
+    from src.app.ui import (
+        apply_page_config,
+        compact_legend,
+        dense_dataframe,
+        get_pipeline_data,
+        metric_panel,
+        render_header,
+        render_sidebar,
+        status_rail,
+        style_plotly,
+    )
+except ImportError:
+    project_root = Path(__file__).resolve().parents[1]
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    from src.app.ui import (
+        apply_page_config,
+        compact_legend,
+        dense_dataframe,
+        get_pipeline_data,
+        metric_panel,
+        render_header,
+        render_sidebar,
+        status_rail,
+        style_plotly,
+    )
 
 apply_page_config("Inventory Intelligence")
 data = get_pipeline_data()

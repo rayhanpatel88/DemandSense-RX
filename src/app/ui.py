@@ -7,9 +7,6 @@ from pathlib import Path
 
 import streamlit as st
 
-from src.pipeline import run_pipeline
-from src.utils.config import load_config
-
 PAGE_TITLES = {
     "overview": "Executive Overview",
     "forecast": "Forecast Explorer",
@@ -40,6 +37,9 @@ PLOTLY_THEME = {
 
 @st.cache_resource(show_spinner="Running DemandSense-RX pipeline...")
 def get_pipeline_data() -> dict:
+    from src.pipeline import run_pipeline
+    from src.utils.config import load_config
+
     return run_pipeline(load_config())
 
 
@@ -490,13 +490,13 @@ def render_sidebar(active_key: str, data: dict | None = None) -> None:
             """,
             unsafe_allow_html=True,
         )
-        st.page_link("streamlit_app.py", label=PAGE_TITLES["overview"], icon=":material/dashboard:", disabled=active_key == "overview")
-        st.page_link("pages/1_Forecast_Explorer.py", label=PAGE_TITLES["forecast"], icon=":material/query_stats:", disabled=active_key == "forecast")
-        st.page_link("pages/2_Inventory_Decisions.py", label=PAGE_TITLES["inventory"], icon=":material/inventory_2:", disabled=active_key == "inventory")
-        st.page_link("pages/3_Robotics_Simulation.py", label=PAGE_TITLES["robotics"], icon=":material/precision_manufacturing:", disabled=active_key == "robotics")
-        st.page_link("pages/4_Explainability.py", label=PAGE_TITLES["explainability"], icon=":material/psychology:", disabled=active_key == "explainability")
-        st.page_link("pages/5_Backtesting.py", label=PAGE_TITLES["backtesting"], icon=":material/history:", disabled=active_key == "backtesting")
-        st.page_link("pages/6_Scenario_Simulator.py", label=PAGE_TITLES["scenario"], icon=":material/tune:", disabled=active_key == "scenario")
+        _page_link("streamlit_app.py", PAGE_TITLES["overview"], ":material/dashboard:", active_key == "overview")
+        _page_link("pages/1_Forecast_Explorer.py", PAGE_TITLES["forecast"], ":material/query_stats:", active_key == "forecast")
+        _page_link("pages/2_Inventory_Decisions.py", PAGE_TITLES["inventory"], ":material/inventory_2:", active_key == "inventory")
+        _page_link("pages/3_Robotics_Simulation.py", PAGE_TITLES["robotics"], ":material/precision_manufacturing:", active_key == "robotics")
+        _page_link("pages/4_Explainability.py", PAGE_TITLES["explainability"], ":material/psychology:", active_key == "explainability")
+        _page_link("pages/5_Backtesting.py", PAGE_TITLES["backtesting"], ":material/history:", active_key == "backtesting")
+        _page_link("pages/6_Scenario_Simulator.py", PAGE_TITLES["scenario"], ":material/tune:", active_key == "scenario")
         st.divider()
         st.button("Run New Scenario", use_container_width=True)
         st.caption("Authenticated session · Principal Architect")
@@ -569,5 +569,28 @@ def dense_dataframe(df, height: int = 320):
 
 def _logo_data_uri() -> str:
     path = Path(__file__).resolve().parents[2] / "assets" / "demandsense_mark.svg"
+    if not path.exists():
+        fallback = (
+            "<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'>"
+            "<rect x='6' y='6' width='84' height='84' rx='18' fill='url(#g)'/>"
+            "<path d='M28 67V29H45.5C58.2 29 66 36.1 66 48C66 60.8 57.5 67 44.8 67H28Z' fill='#07111F'/>"
+            "<defs><linearGradient id='g' x1='18' y1='14' x2='78' y2='82'><stop stop-color='#D9DCFF'/><stop offset='1' stop-color='#5042F1'/></linearGradient></defs></svg>"
+        )
+        encoded = base64.b64encode(fallback.encode("utf-8")).decode("utf-8")
+        return f"data:image/svg+xml;base64,{encoded}"
     encoded = base64.b64encode(path.read_bytes()).decode("utf-8")
     return f"data:image/svg+xml;base64,{encoded}"
+
+
+def segmented_control(label: str, options: list, default=None, key: str | None = None):
+    if hasattr(st, "segmented_control"):
+        return st.segmented_control(label, options=options, default=default, key=key)
+    default_index = options.index(default) if default in options else 0
+    return st.radio(label, options=options, index=default_index, horizontal=True, key=key)
+
+
+def _page_link(page: str, label: str, icon: str, disabled: bool) -> None:
+    if hasattr(st, "page_link"):
+        st.page_link(page, label=label, icon=icon, disabled=disabled)
+    else:
+        st.markdown(f"`{label}`")
