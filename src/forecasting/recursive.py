@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -26,7 +27,7 @@ class RecursiveForecaster:
         self,
         history_features: pd.DataFrame,
         future_exogenous: pd.DataFrame,
-        feature_cols: list[str] | None = None,
+        feature_cols: Optional[list[str]] = None,
     ) -> RecursiveForecastResult:
         if future_exogenous.empty:
             empty = future_exogenous.copy()

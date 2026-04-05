@@ -5,6 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from scipy import stats
+from typing import Optional
 
 from src.utils.logger import get_logger
 
@@ -27,9 +28,9 @@ class InventoryEngine:
         self,
         historical_df: pd.DataFrame,
         forecast_df: pd.DataFrame,
-        current_stock: dict | None = None,
-        lead_time: int | None = None,
-        service_level: float | None = None,
+        current_stock: Optional[dict] = None,
+        lead_time: Optional[int] = None,
+        service_level: Optional[float] = None,
     ) -> pd.DataFrame:
         lt = int(lead_time if lead_time is not None else self.lead_time)
         sl = float(service_level if service_level is not None else self.service_level)

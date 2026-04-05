@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pandas as pd
+from typing import Optional
 
 from src.data.loader import load_or_generate
 from src.evaluation.backtesting import RollingBacktester
@@ -18,7 +19,7 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-def run_pipeline(config: dict | None = None) -> dict:
+def run_pipeline(config: Optional[dict] = None) -> dict:
     config = config or load_config()
     raw_df = load_or_generate(config)
     featured_df = create_features(raw_df, config)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -21,9 +22,9 @@ class WarehouseSimulator:
     def __init__(
         self,
         config: dict,
-        forecast_df: pd.DataFrame | None = None,
-        inventory_df: pd.DataFrame | None = None,
-        slotting_df: pd.DataFrame | None = None,
+        forecast_df: Optional[pd.DataFrame] = None,
+        inventory_df: Optional[pd.DataFrame] = None,
+        slotting_df: Optional[pd.DataFrame] = None,
     ):
         sim_cfg = config["simulation"]
         self.warehouse = Warehouse(

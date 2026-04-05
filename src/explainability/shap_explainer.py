@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 import shap
+from typing import Optional
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -15,8 +16,8 @@ class SHAPExplainer:
         self.feature_cols = feature_cols
         logger.info("Initialising SHAP TreeExplainer")
         self.explainer = shap.TreeExplainer(model)
-        self.shap_values_: np.ndarray | None = None
-        self.sample_df_: pd.DataFrame | None = None
+        self.shap_values_: Optional[np.ndarray] = None
+        self.sample_df_: Optional[pd.DataFrame] = None
 
     def compute(self, df: pd.DataFrame, max_samples: int = 500) -> "SHAPExplainer":
         """Compute SHAP values on a sample of df."""

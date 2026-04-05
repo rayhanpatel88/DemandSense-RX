@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import Optional
+from typing import List, Optional, Tuple
 
 
 class RobotStatus(Enum):
@@ -69,7 +69,7 @@ class Robot:
     def is_idle(self) -> bool:
         return self.status == RobotStatus.IDLE
 
-    def assign_task(self, task: Task, path_to_shelf: list[tuple[int, int]], current_step: int) -> None:
+    def assign_task(self, task: Task, path_to_shelf: List[Tuple[int, int]], current_step: int) -> None:
         self.current_task = task
         task.assigned_robot = self.robot_id
         task.start_step = current_step
@@ -81,7 +81,7 @@ class Robot:
             self.status = RobotStatus.PICKING
             self.picking_steps_remaining = 2 + task.shortage_delay
 
-    def step(self, path_to_packing: list[tuple[int, int]] | None = None, current_step: int = 0) -> bool:
+    def step(self, path_to_packing: Optional[List[Tuple[int, int]]] = None, current_step: int = 0) -> bool:
         self.steps_taken += 1
         completed = False
 

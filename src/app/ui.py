@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from typing import Any, Optional
 
 import streamlit as st
 
@@ -447,7 +448,7 @@ def apply_page_config(page_title: str) -> None:
     )
 
 
-def render_sidebar(active_key: str, data: dict | None = None) -> None:
+def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
     mark_uri = _logo_data_uri()
     with st.sidebar:
         st.markdown(
@@ -582,7 +583,7 @@ def _logo_data_uri() -> str:
     return f"data:image/svg+xml;base64,{encoded}"
 
 
-def segmented_control(label: str, options: list, default=None, key: str | None = None):
+def segmented_control(label: str, options: list, default=None, key: Optional[str] = None):
     if hasattr(st, "segmented_control"):
         return st.segmented_control(label, options=options, default=default, key=key)
     default_index = options.index(default) if default in options else 0
