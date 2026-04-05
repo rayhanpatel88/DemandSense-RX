@@ -1,214 +1,148 @@
-"""Page 4 — Robotics Simulation."""
+"""Warehouse robotics page."""
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parents[1]))
+from __future__ import annotations
 
-import streamlit as st
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 
-from src.utils.config import load_config
+from src.app.ui import apply_page_config, get_pipeline_data, metric_panel, render_header, render_sidebar, style_plotly
+from src.simulation.robot import RobotStatus
 from src.simulation.simulator import WarehouseSimulator
 from src.simulation.warehouse import Cell
 
-st.set_page_config(page_title="Robotics Simulation · DemandSense-RX",
-                   page_icon="🤖", layout="wide")
+apply_page_config("Warehouse Robotics")
+data = get_pipeline_data()
+render_sidebar("robotics", data)
 
-st.markdown("""
-<style>
-[data-testid="stSidebar"] { background: #0f1f35; }
-[data-testid="stSidebar"] * { color: #cdd9e5 !important; }
-</style>""", unsafe_allow_html=True)
-
-
-# ── Sidebar controls ──────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("🤖 Robotics Simulation")
     st.divider()
-    n_robots = st.slider("Number of Robots", 1, 8, 3)
-    time_steps = st.slider("Simulation Steps", 20, 200, 100)
-    orders_per_step = st.slider("Order Arrival Rate", 0.1, 1.0, 0.3, 0.05)
-    run_btn = st.button("▶ Run Simulation", type="primary", use_container_width=True)
-    st.divider()
-    st.page_link("streamlit_app.py", label="← Executive Overview")
-
-# ── Main ──────────────────────────────────────────────────────────────────────
-st.title("🤖 Warehouse Robotics Simulation")
-st.caption("Multi-agent A* pathfinding · Task assignment · Fulfilment metrics")
-st.divider()
-
-# ── Run simulation ────────────────────────────────────────────────────────────
-@st.cache_data(show_spinner="Running simulation…")
-def run_sim(n_robots: int, time_steps: int, orders_per_step: float):
-    config = load_config()
-    config["simulation"]["n_robots"] = n_robots
-    config["simulation"]["time_steps"] = time_steps
-    config["simulation"]["orders_per_step"] = orders_per_step
-    sim = WarehouseSimulator(config)
-    sim.run()
-    metrics = sim.get_metrics()
-    paths_df = sim.get_robot_paths_df()
-    congestion_df = sim.get_congestion_df()
-    warehouse_grid = sim.warehouse.to_numpy()
-    return metrics, paths_df, congestion_df, warehouse_grid, sim.history
+    n_robots = st.slider("Robots", 1, 8, data["config"]["simulation"]["n_robots"])
+    steps = st.slider("Simulation steps", 60, 240, data["config"]["simulation"]["time_steps"], step=20)
+    load_factor = st.slider("Load factor", 0.2, 1.6, 1.0, step=0.1)
+    rerun = st.button("Run simulation", use_container_width=True, type="primary")
 
 
-if "sim_results" not in st.session_state or run_btn:
-    with st.spinner("Running warehouse simulation…"):
-        results = run_sim(n_robots, time_steps, orders_per_step)
-    st.session_state["sim_results"] = results
+@st.cache_data(show_spinner="Simulating warehouse execution...")
+def run_simulation(robot_count: int, sim_steps: int, factor: float):
+    config = data["config"].copy()
+    config["simulation"] = dict(config["simulation"])
+    config["simulation"]["n_robots"] = robot_count
+    config["simulation"]["time_steps"] = sim_steps
+    config["simulation"]["orders_per_step"] = config["simulation"]["orders_per_step"] * factor
+    simulator = WarehouseSimulator(
+        config,
+        forecast_df=data["future_df"],
+        inventory_df=data["inventory_df"],
+        slotting_df=data["slotting_df"],
+    ).run()
+    return {
+        "metrics": simulator.get_metrics(),
+        "paths": simulator.get_robot_paths_df(),
+        "congestion": simulator.get_congestion_df(),
+        "tasks": simulator.get_task_log(),
+        "grid": simulator.warehouse.to_numpy(),
+        "history": simulator.history,
+    }
 
-metrics, paths_df, congestion_df, warehouse_grid, history = st.session_state["sim_results"]
 
-# ── Metrics ───────────────────────────────────────────────────────────────────
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Tasks Generated", metrics["tasks_generated"])
-c2.metric("Tasks Completed", metrics["tasks_completed"])
-c3.metric("Fulfilment Rate", f"{metrics['fulfilment_rate']}%")
-c4.metric("Avg Fulfilment Time", f"{metrics['avg_fulfilment_time']} steps")
-c5.metric("Robot Utilisation", f"{metrics['avg_robot_utilisation']}%")
+if rerun or "robotics_result" not in st.session_state:
+    st.session_state["robotics_result"] = run_simulation(n_robots, steps, load_factor)
 
-st.divider()
+result = st.session_state["robotics_result"]
+metrics = result["metrics"]
+tasks = result["tasks"]
+congestion = result["congestion"]
+grid = result["grid"]
+history = result["history"]
 
-# ── Layout: Grid viz + Playback ───────────────────────────────────────────────
-col_viz, col_ctrl = st.columns([3, 1])
+render_header(
+    "Execution Simulation",
+    "Warehouse Robotics",
+    "Pick tasks are now generated from forecast mix and slotted SKU locations, so congestion and delay are consequences of demand pressure rather than random task spam.",
+)
 
-with col_ctrl:
-    st.subheader("Playback")
-    step = st.slider("Step", 0, max(len(history) - 1, 1), 0,
-                     key="step_slider")
-    st.caption(f"Step {step} / {len(history) - 1}")
-    auto_play = st.checkbox("Auto-advance (refresh page)")
+for col, html in zip(
+    st.columns(5),
+    [
+        metric_panel("Tasks Generated", f"{metrics['tasks_generated']}", "Forecast-weighted picks created"),
+        metric_panel("Fulfilment Rate", f"{metrics['fulfilment_rate']:.1f}%", "Completed versus generated"),
+        metric_panel("Avg Time", f"{metrics['avg_fulfilment_time']:.1f}", "Steps per completed task"),
+        metric_panel("Queue Delay", f"{metrics['avg_queue_delay']:.1f}", "Waiting time before assignment"),
+        metric_panel("Inventory Delays", f"{metrics['inventory_linked_delays']}", "Tasks slowed by shortage pressure"),
+    ],
+):
+    with col:
+        st.markdown(html, unsafe_allow_html=True)
 
-with col_viz:
-    st.subheader("Warehouse Grid & Robot Positions")
-
-    # Build heatmap from warehouse grid
-    H, W = warehouse_grid.shape
-    cell_labels = {int(Cell.EMPTY): "Empty", int(Cell.SHELF): "Shelf",
-                   int(Cell.AISLE): "Aisle", int(Cell.PACKING): "Packing"}
-
-    # Background grid
-    grid_colors = np.zeros((H, W), dtype=float)
-    for r in range(H):
-        for c in range(W):
-            v = warehouse_grid[r, c]
-            if v == Cell.SHELF:
-                grid_colors[r, c] = 0.3
-            elif v == Cell.PACKING:
-                grid_colors[r, c] = 0.7
-            else:
-                grid_colors[r, c] = 0.0
-
+left, right = st.columns([1.55, 1.0], gap="large")
+with left:
+    step = st.slider("Playback step", 0, max(len(history) - 1, 0), min(20, max(len(history) - 1, 0)))
     fig = go.Figure()
-
-    # Warehouse background
-    fig.add_trace(go.Heatmap(
-        z=grid_colors,
-        colorscale=[[0, "#0a1a2e"], [0.3, "#1a3a5e"], [0.7, "#2e5e3e"], [1.0, "#1a3a5e"]],
-        showscale=False,
-        zmin=0, zmax=1,
-        hoverinfo="skip",
-    ))
-
-    # Draw shelves as shapes
-    for r in range(H):
-        for c in range(W):
-            if warehouse_grid[r, c] == Cell.SHELF:
-                fig.add_shape(type="rect",
-                              x0=c - 0.45, x1=c + 0.45,
-                              y0=r - 0.45, y1=r + 0.45,
-                              fillcolor="#2d5a8e", line_color="#4a90d9", line_width=0.5)
-            elif warehouse_grid[r, c] == Cell.PACKING:
-                fig.add_shape(type="rect",
-                              x0=c - 0.45, x1=c + 0.45,
-                              y0=r - 0.45, y1=r + 0.45,
-                              fillcolor="#2e5e3e", line_color="#44bb44", line_width=1)
-
-    # Robot positions at current step
-    if step < len(history):
-        snap = history[step]
-        robot_colors = ["#ff4444", "#44bbff", "#ffaa00", "#aa44ff",
-                        "#ff44aa", "#44ffaa", "#ffff44", "#ff8844"]
-        status_symbols = {
-            "IDLE": "circle", "MOVING_TO_SHELF": "arrow-up",
-            "PICKING": "star", "MOVING_TO_PACKING": "arrow-down",
-            "DELIVERING": "diamond",
-        }
-        for s in snap:
-            rid = s["robot_id"]
-            color = robot_colors[rid % len(robot_colors)]
-            symbol = status_symbols.get(s["status"], "circle")
-            fig.add_trace(go.Scatter(
-                x=[s["col"]], y=[s["row"]],
-                mode="markers+text",
-                marker=dict(size=18, color=color, symbol=symbol,
-                            line=dict(color="white", width=1.5)),
-                text=[f"R{rid}"],
-                textposition="top center",
-                textfont=dict(color="white", size=9),
-                name=f"Robot {rid} ({s['status'].lower()})",
-                showlegend=True,
-            ))
-
-    fig.update_layout(
-        template="plotly_dark",
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(10,26,46,1)",
-        height=450,
-        xaxis=dict(range=[-0.5, W - 0.5], showgrid=False, zeroline=False,
-                   showticklabels=False, title=""),
-        yaxis=dict(range=[H - 0.5, -0.5], showgrid=False, zeroline=False,
-                   showticklabels=False, title="", scaleanchor="x", scaleratio=1),
-        margin=dict(l=0, r=0, t=10, b=0),
-        legend=dict(orientation="h", y=-0.05, font=dict(size=9)),
-    )
+    background = np.where(grid == Cell.SHELF, 0.65, np.where(grid == Cell.PACKING, 0.25, 0.05))
+    fig.add_trace(go.Heatmap(z=background, colorscale=[[0, "#f2eee7"], [0.45, "#c8d5e2"], [1, "#495e76"]], showscale=False))
+    color_map = {
+        RobotStatus.IDLE.name: "#5a715f",
+        RobotStatus.MOVING_TO_SHELF.name: "#1f3a5f",
+        RobotStatus.PICKING.name: "#8c5a2b",
+        RobotStatus.MOVING_TO_PACKING.name: "#6d685f",
+        RobotStatus.DELIVERING.name: "#a64032",
+        RobotStatus.DELAYED.name: "#ad7b2b",
+    }
+    if history:
+        for snap in history[step]:
+            fig.add_trace(
+                go.Scatter(
+                    x=[snap["col"]],
+                    y=[snap["row"]],
+                    mode="markers+text",
+                    text=[f"R{snap['robot_id']}"],
+                    textposition="middle center",
+                    marker=dict(size=18, color=color_map.get(snap["status"], "#161616"), line=dict(color="#faf8f4", width=1.4)),
+                    name=snap["status"].replace("_", " ").title(),
+                    showlegend=False,
+                )
+            )
+    fig = style_plotly(fig, 470)
+    fig.update_layout(yaxis=dict(scaleanchor="x", autorange="reversed", showticklabels=False), xaxis=dict(showticklabels=False))
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Live Warehouse State")
     st.plotly_chart(fig, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Robot status table ────────────────────────────────────────────────────────
-st.subheader("Robot Status at Selected Step")
-if step < len(history):
-    snap_df = pd.DataFrame(history[step])
-    st.dataframe(snap_df, use_container_width=True, hide_index=True)
+    if not tasks.empty:
+        throughput = tasks.groupby("zone").size().rename("tasks").reset_index()
+        zone = px.bar(throughput, x="zone", y="tasks", color="zone", color_discrete_map={"A": "#1f3a5f", "B": "#8c5a2b", "C": "#6d685f"})
+        zone = style_plotly(zone, 280)
+        zone.update_layout(showlegend=False, xaxis_title="Zone", yaxis_title="Tasks")
+        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.subheader("Zone Traffic Mix")
+        st.plotly_chart(zone, use_container_width=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-st.divider()
+with right:
+    heat = congestion.pivot(index="row", columns="col", values="visits").fillna(0)
+    heatmap = px.imshow(heat, color_continuous_scale=["#f5f0e8", "#d9c9ae", "#8c5a2b", "#a64032"], aspect="equal")
+    heatmap = style_plotly(heatmap, 300)
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Congestion Heatmap")
+    st.plotly_chart(heatmap, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Congestion Heatmap ────────────────────────────────────────────────────────
-col_a, col_b = st.columns(2)
-
-with col_a:
-    st.subheader("🔥 Congestion Heatmap")
-    cong_pivot = congestion_df.pivot(index="row", columns="col", values="visits").fillna(0)
-    fig_cong = px.imshow(cong_pivot, color_continuous_scale="Hot",
-                         aspect="equal", template="plotly_dark", height=300)
-    fig_cong.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)", margin=dict(l=0, r=0, t=10, b=0),
-        xaxis_title="Column", yaxis_title="Row",
-        coloraxis_colorbar_title="Visits",
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Operational Notes")
+    st.markdown(
+        f"<div class='note'>High-demand zones: {metrics['zone_task_mix']}. "
+        f"Reducing robots increases queue delay and average fulfilment time; shortage-linked picks add recovery delay before packing.</div>",
+        unsafe_allow_html=True,
     )
-    st.plotly_chart(fig_cong, use_container_width=True)
-
-with col_b:
-    st.subheader("📊 Tasks Completed Over Time")
-    # Build cumulative completions from paths_df
-    if len(paths_df) > 0:
-        completed_by_step = (
-            paths_df.groupby(["step", "robot_id"])["tasks_completed"]
-            .max()
-            .reset_index()
-        )
-        total_by_step = completed_by_step.groupby("step")["tasks_completed"].sum().reset_index()
-        fig_tasks = px.line(total_by_step, x="step", y="tasks_completed",
-                            template="plotly_dark", height=300,
-                            color_discrete_sequence=["#44bb44"])
-        fig_tasks.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,25,45,0.8)",
-            margin=dict(l=0, r=0, t=10, b=0),
-            xaxis_title="Time Step", yaxis_title="Cumulative Tasks Completed",
-        )
-        st.plotly_chart(fig_tasks, use_container_width=True)
-    else:
-        st.info("No task completion data available")
+    if not tasks.empty:
+        focus = tasks.sort_values(["shortage_delay", "queue_delay"], ascending=[False, False]).head(5)
+        for _, row in focus.iterrows():
+            st.markdown(
+                f"<div class='note'><span class='tag'>{row['sku']}</span>Zone {row['zone']} | queue {row['queue_delay']} | shortage delay {row['shortage_delay']}</div>",
+                unsafe_allow_html=True,
+            )
+    st.markdown("</div>", unsafe_allow_html=True)

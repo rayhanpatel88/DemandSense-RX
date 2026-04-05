@@ -1,120 +1,116 @@
-"""Rolling window backtesting engine."""
+"""Rolling-origin backtesting engine aligned with recursive inference."""
+
+from __future__ import annotations
 
 import pandas as pd
-import numpy as np
+
 from src.evaluation.metrics import compute_all_metrics
+from src.features.engineer import create_features, get_feature_cols
+from src.forecasting.recursive import RecursiveForecaster
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 
 class RollingBacktester:
-    """Rolling-origin backtester for demand forecasting models."""
+    """Rolling-origin backtester that respects recursive multi-step forecasting."""
 
     def __init__(self, n_splits: int = 4, test_size: int = 30, gap: int = 0):
         self.n_splits = n_splits
         self.test_size = test_size
         self.gap = gap
 
-    def run(self, df: pd.DataFrame, models: dict,
-            feature_cols: list, config: dict) -> dict:
-        """
-        Run backtesting for all provided models.
+    def run(self, raw_df: pd.DataFrame, models: dict, config: dict) -> dict:
+        raw = raw_df.sort_values(["sku", "date"]).copy()
+        dates = sorted(raw["date"].unique())
+        folds = self._build_folds(dates)
+        logger.info("Running %s rolling folds across %s models", len(folds), len(models))
 
-        Parameters
-        ----------
-        df : featured DataFrame (output of create_features)
-        models : dict of {model_name: BaseForecaster}
-        feature_cols : list of feature column names
-        config : config dict
+        all_predictions: list[pd.DataFrame] = []
+        summary_rows: list[dict] = []
+        by_sku_rows: list[dict] = []
 
-        Returns
-        -------
-        dict with keys:
-          - 'summary': overall metrics per model
-          - 'by_sku': metrics per SKU per model
-          - 'predictions': all fold predictions
-        """
-        df = df.dropna(subset=feature_cols + ["demand"]).copy()
-        dates = sorted(df["date"].unique())
-        n_dates = len(dates)
+        for model_name, model in models.items():
+            fold_metrics: list[dict] = []
+            model_predictions: list[pd.DataFrame] = []
 
-        # Build fold splits
-        folds = self._build_folds(dates, n_dates)
-        logger.info(f"Running {len(folds)} folds × {len(models)} models")
+            for fold_idx, (train_dates, test_dates) in enumerate(folds):
+                train_raw = raw[raw["date"].isin(train_dates)].copy()
+                test_raw = raw[raw["date"].isin(test_dates)].copy()
+                if train_raw.empty or test_raw.empty:
+                    continue
 
-        all_preds = []
-        model_metrics = {m: [] for m in models}
+                train_features = create_features(train_raw, config)
+                feature_cols = get_feature_cols(train_features)
+                train_model_df = train_features.dropna(subset=feature_cols + ["demand"]).copy()
+                if train_model_df.empty:
+                    continue
+                model.fit(train_model_df, feature_cols)
 
-        for fold_idx, (train_dates, test_dates) in enumerate(folds):
-            train = df[df["date"].isin(train_dates)].copy()
-            test = df[df["date"].isin(test_dates)].copy()
+                test_exogenous = test_raw[["date", "sku", "category", "family", "promotion", "price", "lead_time_days"]].copy()
+                if hasattr(model, "recursive_forecast"):
+                    pred_df = model.recursive_forecast(train_raw, test_exogenous)
+                elif model_name == "LightGBM":
+                    recursive = RecursiveForecaster(model)
+                    forecast_result = recursive.forecast(train_features, test_exogenous, feature_cols)
+                    pred_df = forecast_result.forecast_frame
+                else:
+                    test_features = create_features(pd.concat([train_raw, test_raw], ignore_index=True), config)
+                    test_features = test_features[test_features["date"].isin(test_dates)].copy()
+                    intervals = model.predict_with_intervals(test_features, feature_cols)
+                    pred_df = test_features[["date", "sku", "category", "family", "promotion", "price"]].copy()
+                    pred_df["forecast"] = intervals["forecast"].values
+                    pred_df["lower"] = intervals["lower"].values
+                    pred_df["upper"] = intervals["upper"].values
 
-            if len(train) == 0 or len(test) == 0:
-                continue
+                merged = pred_df.merge(
+                    test_raw[["date", "sku", "demand"]],
+                    on=["date", "sku"],
+                    how="left",
+                )
+                merged["fold"] = fold_idx
+                merged["model"] = model_name
+                model_predictions.append(merged)
+                all_predictions.append(merged)
 
-            for model_name, model in models.items():
-                # Re-fit on training fold
-                model.fit(train, feature_cols)
-                preds = model.predict(test, feature_cols)
-
-                test_copy = test.copy()
-                test_copy["forecast"] = np.clip(preds, 0, None)
-                test_copy["model"] = model_name
-                test_copy["fold"] = fold_idx
-                all_preds.append(test_copy[["date", "sku", "demand", "forecast", "model", "fold"]])
-
-                metrics = compute_all_metrics(test["demand"].values, preds)
+                metrics = compute_all_metrics(merged["demand"].values, merged["forecast"].values)
                 metrics["fold"] = fold_idx
-                model_metrics[model_name].append(metrics)
+                fold_metrics.append(metrics)
 
-        pred_df = pd.concat(all_preds, ignore_index=True) if all_preds else pd.DataFrame()
+            if fold_metrics:
+                fold_df = pd.DataFrame(fold_metrics)
+                summary_rows.append(
+                    {
+                        "model": model_name,
+                        "MAE": round(fold_df["MAE"].mean(), 3),
+                        "RMSE": round(fold_df["RMSE"].mean(), 3),
+                        "MAPE": round(fold_df["MAPE"].mean(), 3),
+                        "WAPE": round(fold_df["WAPE"].mean(), 3),
+                    }
+                )
 
-        # Aggregate summary metrics
-        summary_rows = []
-        for model_name, fold_metrics in model_metrics.items():
-            if not fold_metrics:
-                continue
-            fold_df = pd.DataFrame(fold_metrics)
-            row = {"model": model_name}
-            for col in ["MAE", "RMSE", "MAPE", "WAPE"]:
-                row[col] = round(fold_df[col].mean(), 3)
-            summary_rows.append(row)
+            if model_predictions:
+                pred_all = pd.concat(model_predictions, ignore_index=True)
+                for sku, group in pred_all.groupby("sku"):
+                    metrics = compute_all_metrics(group["demand"].values, group["forecast"].values)
+                    metrics["model"] = model_name
+                    metrics["sku"] = sku
+                    by_sku_rows.append(metrics)
 
+        predictions = pd.concat(all_predictions, ignore_index=True) if all_predictions else pd.DataFrame()
         summary = pd.DataFrame(summary_rows).set_index("model") if summary_rows else pd.DataFrame()
-
-        # Per-SKU metrics
-        by_sku_rows = []
-        for model_name in models:
-            model_preds = pred_df[pred_df["model"] == model_name] if len(pred_df) else pd.DataFrame()
-            if len(model_preds) == 0:
-                continue
-            for sku, group in model_preds.groupby("sku"):
-                m = compute_all_metrics(group["demand"].values, group["forecast"].values)
-                m["model"] = model_name
-                m["sku"] = sku
-                by_sku_rows.append(m)
-
         by_sku = pd.DataFrame(by_sku_rows) if by_sku_rows else pd.DataFrame()
+        return {"summary": summary, "by_sku": by_sku, "predictions": predictions}
 
-        logger.info("Backtesting complete")
-        return {"summary": summary, "by_sku": by_sku, "predictions": pred_df}
-
-    def _build_folds(self, dates: list, n_dates: int) -> list:
-        folds = []
-        step = max(self.test_size, (n_dates - self.test_size * self.n_splits) // self.n_splits)
-        min_train = max(60, n_dates // 4)
-
-        for i in range(self.n_splits):
-            test_end_idx = n_dates - i * self.test_size
-            test_start_idx = test_end_idx - self.test_size
-            train_end_idx = test_start_idx - self.gap
-
-            if train_end_idx < min_train:
+    def _build_folds(self, dates: list[pd.Timestamp]) -> list[tuple[set, set]]:
+        folds: list[tuple[set, set]] = []
+        n_dates = len(dates)
+        min_train = max(90, n_dates // 3)
+        for idx in range(self.n_splits):
+            test_end = n_dates - idx * self.test_size
+            test_start = test_end - self.test_size
+            train_end = test_start - self.gap
+            if train_end < min_train or test_start < 0:
                 break
-
-            train_dates = set(dates[:train_end_idx])
-            test_dates = set(dates[test_start_idx:test_end_idx])
-            folds.append((train_dates, test_dates))
-
+            folds.append((set(dates[:train_end]), set(dates[test_start:test_end])))
         return list(reversed(folds))

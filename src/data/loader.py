@@ -1,84 +1,88 @@
 """Data loading and validation utilities."""
 
-import pandas as pd
-import numpy as np
+from __future__ import annotations
+
 from pathlib import Path
+
+import pandas as pd
+
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
 REQUIRED_COLS = {"date", "sku", "demand"}
-OPTIONAL_COLS = {"price", "promotion", "category"}
+OPTIONAL_DEFAULTS = {
+    "price": 1.0,
+    "promotion": 0,
+    "category": "Unknown",
+    "family": "Unknown",
+    "lead_time_days": 7,
+    "inventory_position": 0.0,
+    "received_inventory": 0.0,
+    "unit_cost": 0.0,
+    "service_level_target": 0.95,
+}
 
 
 def validate_data(df: pd.DataFrame) -> pd.DataFrame:
-    """Validate and clean a demand DataFrame."""
     missing = REQUIRED_COLS - set(df.columns)
     if missing:
-        raise ValueError(f"Missing required columns: {missing}")
+        raise ValueError(f"Missing required columns: {sorted(missing)}")
 
-    df = df.copy()
-    df["date"] = pd.to_datetime(df["date"])
+    frame = df.copy()
+    frame["date"] = pd.to_datetime(frame["date"])
+    for col, default in OPTIONAL_DEFAULTS.items():
+        if col not in frame.columns:
+            frame[col] = default
 
-    # Fill optional columns with defaults
-    if "price" not in df.columns:
-        df["price"] = 0.0
-    if "promotion" not in df.columns:
-        df["promotion"] = 0
-    if "category" not in df.columns:
-        df["category"] = "Unknown"
-
-    # Handle missing demand values
-    n_missing = df["demand"].isna().sum()
-    if n_missing > 0:
-        logger.warning(f"Filling {n_missing} missing demand values via forward fill")
-        df["demand"] = df.groupby("sku")["demand"].transform(
-            lambda x: x.ffill().fillna(0)
-        )
-
-    # Clip negative demand to 0
-    n_neg = (df["demand"] < 0).sum()
-    if n_neg > 0:
-        logger.warning(f"Clipping {n_neg} negative demand values to 0")
-        df["demand"] = df["demand"].clip(lower=0)
-
-    # Ensure date continuity per SKU (fill gaps)
-    df = _fill_date_gaps(df)
-
-    logger.info(f"Validated data: {len(df)} rows, {df['sku'].nunique()} SKUs")
-    return df
-
-
-def _fill_date_gaps(df: pd.DataFrame) -> pd.DataFrame:
-    """Fill missing dates within each SKU's time range."""
-    all_dfs = []
-    for sku, group in df.groupby("sku"):
-        date_range = pd.date_range(group["date"].min(), group["date"].max(), freq="D")
-        group = group.set_index("date").reindex(date_range).reset_index()
-        group.rename(columns={"index": "date"}, inplace=True, errors="ignore")
-        group["sku"] = sku
-        group["demand"] = group["demand"].fillna(0)
-        group["promotion"] = group["promotion"].fillna(0).astype(int)
-        group["price"] = group["price"].ffill()
-        group["category"] = group["category"].ffill()
-        all_dfs.append(group)
-    return pd.concat(all_dfs, ignore_index=True)
+    frame["demand"] = frame["demand"].fillna(0).clip(lower=0)
+    frame["promotion"] = frame["promotion"].fillna(0).astype(int)
+    frame = _fill_date_gaps(frame)
+    logger.info("Validated %s rows across %s SKUs", len(frame), frame["sku"].nunique())
+    return frame
 
 
 def load_or_generate(config: dict) -> pd.DataFrame:
-    """Load data from disk if available, otherwise generate synthetic data."""
     from src.data.generator import generate_synthetic_data
 
-    raw_path = Path(__file__).resolve().parents[2] / "data" / "raw" / "demand.parquet"
+    root = Path(__file__).resolve().parents[2]
+    raw_dir = root / "data" / "raw"
+    parquet_path = raw_dir / "demand.parquet"
+    csv_path = raw_dir / "demand.csv"
 
-    if raw_path.exists():
-        logger.info(f"Loading data from {raw_path}")
-        df = pd.read_parquet(raw_path)
+    if parquet_path.exists():
+        logger.info("Loading demand data from %s", parquet_path)
+        data = pd.read_parquet(parquet_path)
+    elif csv_path.exists():
+        logger.info("Loading demand data from %s", csv_path)
+        data = pd.read_csv(csv_path)
     else:
-        logger.info("Generating synthetic data")
-        df = generate_synthetic_data(config)
-        raw_path.parent.mkdir(parents=True, exist_ok=True)
-        df.to_parquet(raw_path, index=False)
-        logger.info(f"Saved synthetic data to {raw_path}")
+        logger.info("Generating synthetic data because no raw dataset was found")
+        data = generate_synthetic_data(config)
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        data.to_csv(csv_path, index=False)
+        try:
+            data.to_parquet(parquet_path, index=False)
+        except Exception as exc:
+            logger.warning("Parquet export skipped: %s", exc)
+    return validate_data(data)
 
-    return validate_data(df)
+
+def _fill_date_gaps(df: pd.DataFrame) -> pd.DataFrame:
+    all_frames: list[pd.DataFrame] = []
+    for sku, group in df.groupby("sku"):
+        group = group.sort_values("date")
+        date_range = pd.date_range(group["date"].min(), group["date"].max(), freq="D")
+        filled = group.set_index("date").reindex(date_range).reset_index()
+        filled = filled.rename(columns={"index": "date"})
+        filled["sku"] = sku
+        for col, default in OPTIONAL_DEFAULTS.items():
+            if col in {"price", "inventory_position"}:
+                filled[col] = filled[col].ffill().fillna(default)
+            elif col in {"category", "family"}:
+                filled[col] = filled[col].ffill().bfill().fillna(default)
+            else:
+                filled[col] = filled[col].fillna(default)
+        filled["demand"] = filled["demand"].fillna(0).clip(lower=0)
+        all_frames.append(filled)
+    return pd.concat(all_frames, ignore_index=True)

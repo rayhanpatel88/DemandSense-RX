@@ -1,213 +1,99 @@
-"""Page 7 — Scenario Simulator."""
+"""Scenario simulator page."""
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parents[1]))
+from __future__ import annotations
 
-import streamlit as st
-import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
+import streamlit as st
 
-from src.utils.config import load_config
-from src.pipeline import run_pipeline
+from src.app.ui import apply_page_config, get_pipeline_data, metric_panel, render_header, render_sidebar, style_plotly
 from src.recommendations.inventory import InventoryEngine
 from src.simulation.simulator import WarehouseSimulator
 
-st.set_page_config(page_title="Scenario Simulator · DemandSense-RX",
-                   page_icon="🎛️", layout="wide")
+apply_page_config("Scenario Simulator")
+data = get_pipeline_data()
+render_sidebar("scenario", data)
 
-st.markdown("""
-<style>
-[data-testid="stSidebar"] { background: #0f1f35; }
-[data-testid="stSidebar"] * { color: #cdd9e5 !important; }
-</style>""", unsafe_allow_html=True)
-
-
-@st.cache_resource(show_spinner="Loading pipeline…")
-def get_data():
-    return run_pipeline(load_config())
-
-
-data = get_data()
+base_future = data["future_df"]
+base_inventory = data["inventory_df"]
 config = data["config"]
-future_df = data["future_df"]
-raw_df = data["raw_df"]
-inventory_df = data["inventory_df"]
 
-# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("🎛️ Scenario Simulator")
-    st.caption("Adjust levers and see downstream impact")
     st.divider()
-
-    st.markdown("**Demand Scenario**")
-    demand_multiplier = st.slider("Demand Multiplier", 0.5, 3.0, 1.0, 0.05,
-                                  help="Scale forecast demand up or down")
-    price_change_pct = st.slider("Price Change (%)", -30, 50, 0, 5,
-                                 help="Simulate a price increase/decrease effect on demand")
-
-    st.markdown("**Supply / Operations**")
-    lead_time = st.slider("Lead Time (days)", 1, 30,
-                          config["inventory"]["default_lead_time_days"])
-    service_level = st.slider("Service Level", 0.80, 0.99, 0.95, 0.01)
-
-    st.markdown("**Robotics**")
-    n_robots = st.slider("Number of Robots", 1, 10,
-                         config["simulation"]["n_robots"])
-    sim_steps = st.slider("Simulation Steps", 50, 300, 100)
-
-    run_btn = st.button("▶ Apply Scenario", type="primary", use_container_width=True)
-    reset_btn = st.button("↺ Reset to Baseline", use_container_width=True)
-    st.divider()
-    st.page_link("streamlit_app.py", label="← Executive Overview")
-
-# ── Main ──────────────────────────────────────────────────────────────────────
-st.title("🎛️ Scenario Simulator")
-st.caption("What-if analysis: adjust demand, supply and robotics parameters dynamically")
-st.divider()
-
-# Price elasticity approximation: -0.5 elasticity
-price_demand_adj = 1.0 + (price_change_pct / 100) * (-0.5)
-effective_multiplier = demand_multiplier * max(price_demand_adj, 0.1)
-
-# ── Compute scenario ──────────────────────────────────────────────────────────
-@st.cache_data(show_spinner="Running scenario…")
-def compute_scenario(effective_multiplier: float, lead_time: int,
-                     service_level: float, n_robots: int, sim_steps: int):
-    cfg = load_config()
-    cfg["simulation"]["n_robots"] = n_robots
-    cfg["simulation"]["time_steps"] = sim_steps
-
-    # Adjusted forecasts
-    fcst_adj = future_df.copy()
-    fcst_adj["forecast"] = np.clip(fcst_adj["forecast"] * effective_multiplier, 0, None)
-    fcst_adj["lower"] = np.clip(fcst_adj["lower"] * effective_multiplier, 0, None)
-    fcst_adj["upper"] = np.clip(fcst_adj["upper"] * effective_multiplier, 0, None)
-
-    # Inventory with new params
-    inv_engine = InventoryEngine(cfg)
-    inv_adj = inv_engine.compute(raw_df, fcst_adj, lead_time=lead_time,
-                                 service_level=service_level)
-
-    # Robot simulation
-    sim = WarehouseSimulator(cfg)
-    sim.run()
-    sim_metrics = sim.get_metrics()
-
-    return fcst_adj, inv_adj, sim_metrics
+    demand_lift = st.slider("Demand multiplier", 0.6, 2.4, 1.0, step=0.05)
+    promo_intensity = st.slider("Promo uplift", 0.8, 1.5, 1.0, step=0.05)
+    lead_time = st.slider("Lead time", 2, 20, config["inventory"]["default_lead_time_days"])
+    service_level = st.slider("Service level", 0.85, 0.99, config["inventory"]["default_service_level"], step=0.01)
+    robots = st.slider("Robots", 1, 10, config["simulation"]["n_robots"])
 
 
-if run_btn or "scenario_results" not in st.session_state:
-    with st.spinner("Computing scenario…"):
-        fcst_adj, inv_adj, sim_metrics = compute_scenario(
-            effective_multiplier, lead_time, service_level, n_robots, sim_steps
-        )
-    st.session_state["scenario_results"] = (fcst_adj, inv_adj, sim_metrics)
+@st.cache_data(show_spinner="Running scenario analysis...")
+def simulate(demand_multiplier: float, promo_multiplier: float, lead_days: int, service_target: float, robot_count: int):
+    scenario_future = base_future.copy()
+    scenario_future["forecast"] = scenario_future["forecast"] * demand_multiplier * np.where(scenario_future["promotion"] > 0, promo_multiplier, 1.0)
+    scenario_future["lower"] = scenario_future["lower"] * demand_multiplier
+    scenario_future["upper"] = scenario_future["upper"] * demand_multiplier * np.where(scenario_future["promotion"] > 0, promo_multiplier, 1.0)
+    inventory = InventoryEngine(config).compute(data["raw_df"], scenario_future, lead_time=lead_days, service_level=service_target)
+    scenario_config = dict(config)
+    scenario_config["simulation"] = dict(config["simulation"])
+    scenario_config["simulation"]["n_robots"] = robot_count
+    simulation = WarehouseSimulator(scenario_config, forecast_df=scenario_future, inventory_df=inventory, slotting_df=data["slotting_df"]).run()
+    return scenario_future, inventory, simulation.get_metrics()
 
-if reset_btn:
-    if "scenario_results" in st.session_state:
-        del st.session_state["scenario_results"]
-    st.rerun()
 
-fcst_adj, inv_adj, sim_metrics = st.session_state.get(
-    "scenario_results",
-    (future_df, inventory_df, {"fulfilment_rate": 0, "avg_robot_utilisation": 0,
-                                "tasks_completed": 0, "avg_fulfilment_time": 0})
+scenario_future, scenario_inventory, sim_metrics = simulate(demand_lift, promo_intensity, lead_time, service_level, robots)
+
+render_header(
+    "Scenario Planning",
+    "Scenario Simulator",
+    "Stress demand, lead time, and labor capacity on the left; inspect resulting forecast volume, inventory posture, and warehouse throughput on the right.",
 )
 
-# ── Delta KPIs ────────────────────────────────────────────────────────────────
-baseline_total = int(future_df["forecast"].sum())
-scenario_total = int(fcst_adj["forecast"].sum())
-delta_forecast = scenario_total - baseline_total
+for col, html in zip(
+    st.columns(4),
+    [
+        metric_panel("Scenario Demand", f"{scenario_future['forecast'].sum():,.0f}", f"{scenario_future['forecast'].sum() - base_future['forecast'].sum():+,.0f} units vs baseline"),
+        metric_panel("Reorder SKUs", f"{int(scenario_inventory['reorder_needed'].sum())}", f"{int(scenario_inventory['reorder_needed'].sum() - base_inventory['reorder_needed'].sum()):+d} vs baseline"),
+        metric_panel("Execution Rate", f"{sim_metrics['fulfilment_rate']:.1f}%", "Warehouse completion rate"),
+        metric_panel("Delayed Picks", f"{sim_metrics['inventory_linked_delays']}", "Shortage-linked execution friction"),
+    ],
+):
+    with col:
+        st.markdown(html, unsafe_allow_html=True)
 
-baseline_reorder = int(inventory_df["reorder_needed"].sum())
-scenario_reorder = int(inv_adj["reorder_needed"].sum())
-delta_reorder = scenario_reorder - baseline_reorder
-
-baseline_stockout = int((inventory_df["stockout_risk"].isin(["critical", "high"])).sum())
-scenario_stockout = int((inv_adj["stockout_risk"].isin(["critical", "high"])).sum())
-delta_stockout = scenario_stockout - baseline_stockout
-
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Effective Demand Multiplier", f"{effective_multiplier:.2f}×")
-c2.metric("30d Forecast Total", f"{scenario_total:,}",
-          delta=f"{delta_forecast:+,} vs baseline")
-c3.metric("SKUs Needing Reorder", scenario_reorder,
-          delta=f"{delta_reorder:+} vs baseline")
-c4.metric("High/Critical Risk SKUs", scenario_stockout,
-          delta=f"{delta_stockout:+} vs baseline")
-c5.metric("Robot Fulfilment Rate", f"{sim_metrics['fulfilment_rate']}%")
-
-st.divider()
-
-# ── Scenario vs Baseline Forecast ────────────────────────────────────────────
-col_a, col_b = st.columns(2)
-
-with col_a:
-    st.subheader("📈 Scenario vs Baseline — Total Forecast")
-    base_agg = future_df.groupby("date")["forecast"].sum().reset_index()
-    base_agg["series"] = "Baseline"
-    scen_agg = fcst_adj.groupby("date")["forecast"].sum().reset_index()
-    scen_agg["series"] = "Scenario"
-    combined = pd.concat([base_agg, scen_agg], ignore_index=True)
-    combined.rename(columns={"forecast": "value"}, inplace=True)
-
-    fig = px.line(combined, x="date", y="value", color="series",
-                  color_discrete_map={"Baseline": "#4a90d9", "Scenario": "#e84393"},
-                  template="plotly_dark", height=300)
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,25,45,0.8)",
-        margin=dict(l=0, r=0, t=10, b=0), xaxis_title="", yaxis_title="Units",
-        legend=dict(orientation="h", y=1.08),
+controls, outputs = st.columns([0.9, 1.5], gap="large")
+with controls:
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Scenario Readout")
+    st.markdown(
+        f"<div class='note'>Demand multiplier {demand_lift:.2f}x with promo factor {promo_intensity:.2f}x. "
+        f"Lead time is {lead_time} days and service target is {service_level:.1%}. "
+        f"Warehouse labor is constrained to {robots} robots.</div>",
+        unsafe_allow_html=True,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    focus = scenario_inventory.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(6)
+    for _, row in focus.iterrows():
+        st.markdown(f"<div class='note'><span class='tag'>{row['sku']}</span>{row['explanation']}</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-with col_b:
-    st.subheader("🏭 Inventory Impact — Days to Stockout")
-    compare_inv = pd.merge(
-        inventory_df[["sku", "days_to_stockout"]].rename(columns={"days_to_stockout": "baseline"}),
-        inv_adj[["sku", "days_to_stockout"]].rename(columns={"days_to_stockout": "scenario"}),
-        on="sku"
-    ).head(15)
-    fig2 = go.Figure()
-    fig2.add_trace(go.Bar(name="Baseline", x=compare_inv["sku"],
-                          y=compare_inv["baseline"], marker_color="#4a90d9"))
-    fig2.add_trace(go.Bar(name="Scenario", x=compare_inv["sku"],
-                          y=compare_inv["scenario"], marker_color="#e84393"))
-    fig2.update_layout(
-        barmode="group", template="plotly_dark", height=300,
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(15,25,45,0.8)",
-        margin=dict(l=0, r=0, t=10, b=0), xaxis_title="", yaxis_title="Days",
-        xaxis_tickangle=-45, legend=dict(orientation="h", y=1.08),
-    )
-    st.plotly_chart(fig2, use_container_width=True)
+with outputs:
+    baseline = base_future.groupby("date")["forecast"].sum().reset_index(name="baseline")
+    scenario = scenario_future.groupby("date")["forecast"].sum().reset_index(name="scenario")
+    merged = baseline.merge(scenario, on="date")
+    lines = px.line(merged.melt(id_vars="date", var_name="series", value_name="forecast"), x="date", y="forecast", color="series", color_discrete_map={"baseline": "#6d685f", "scenario": "#1f3a5f"})
+    lines = style_plotly(lines, 320)
+    lines.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Units")
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Demand Delta")
+    st.plotly_chart(lines, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Robot performance ─────────────────────────────────────────────────────────
-st.subheader("🤖 Scenario Robot Performance")
-col_r1, col_r2, col_r3, col_r4 = st.columns(4)
-col_r1.metric("Tasks Completed", sim_metrics["tasks_completed"])
-col_r2.metric("Tasks Pending", sim_metrics["tasks_pending"])
-col_r3.metric("Avg Fulfilment Time", f"{sim_metrics['avg_fulfilment_time']} steps")
-col_r4.metric("Avg Robot Utilisation", f"{sim_metrics['avg_robot_utilisation']}%")
-
-# ── Scenario inventory table ──────────────────────────────────────────────────
-st.divider()
-st.subheader("📋 Scenario Inventory Decisions")
-scenario_display = inv_adj[["sku", "mean_daily_demand", "safety_stock",
-                             "reorder_point", "days_to_stockout",
-                             "stockout_risk", "reorder_needed"]].copy()
-
-risk_color_map = {
-    "critical": "background-color:#3d0000;color:#ff6666",
-    "high": "background-color:#3d1a00;color:#ff9944",
-    "medium": "background-color:#3d3400;color:#ffd700",
-    "low": "background-color:#003d00;color:#88ff88",
-}
-
-st.dataframe(
-    scenario_display.style
-    .map(lambda v: risk_color_map.get(v, ""), subset=["stockout_risk"]),
-    use_container_width=True, hide_index=True, height=350,
-)
+    compare = scenario_inventory[["sku", "days_to_stockout"]].merge(base_inventory[["sku", "days_to_stockout"]], on="sku", suffixes=("_scenario", "_baseline"))
+    top = compare.sort_values("days_to_stockout_scenario").head(12)
+    bars = px.bar(top.melt(id_vars="sku", var_name="series", value_name="days"), x="sku", y="days", color="series", barmode="group", color_discrete_map={"days_to_stockout_scenario": "#1f3a5f", "days_to_stockout_baseline": "#b4a06a"})
+    bars = style_plotly(bars, 320)
+    bars.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Days to stockout")
+    st.markdown('<div class="panel">', unsafe_allow_html=True)
+    st.subheader("Inventory Impact")
+    st.plotly_chart(bars, use_container_width=True)
+    st.markdown("</div>", unsafe_allow_html=True)
