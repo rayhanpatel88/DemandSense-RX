@@ -1,0 +1,46 @@
+data:
+  n_skus: 20
+  start_date: "2022-01-01"
+  end_date: "2024-01-01"
+  noise_level: 0.15
+  seed: 42
+
+forecasting:
+  default_horizon: 30
+  lag_features: [1, 7, 14, 28]
+  rolling_windows: [7, 14, 28]
+  train_ratio: 0.8
+  quantiles: [0.1, 0.5, 0.9]
+
+models:
+  lgbm:
+    n_estimators: 300
+    learning_rate: 0.05
+    max_depth: 6
+    num_leaves: 31
+    min_child_samples: 20
+    subsample: 0.8
+    colsample_bytree: 0.8
+    reg_alpha: 0.1
+    reg_lambda: 0.1
+    verbose: -1
+  baseline:
+    window: 7
+
+inventory:
+  default_lead_time_days: 7
+  default_service_level: 0.95
+  default_reorder_quantity_multiplier: 2.0
+
+simulation:
+  grid_width: 20
+  grid_height: 15
+  n_robots: 3
+  n_packing_stations: 3
+  time_steps: 100
+  orders_per_step: 0.3
+  seed: 42
+
+reliability:
+  high_threshold: 0.75
+  low_threshold: 0.45
