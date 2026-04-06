@@ -116,8 +116,13 @@ class InventoryEngine:
         logger.info("Computed inventory recommendations for %s SKUs", len(result))
         return result.reset_index(drop=True)
 
-    def compute_stockout_timeline(self, historical_df: pd.DataFrame, forecast_df: pd.DataFrame) -> pd.DataFrame:
-        inventory = self.compute(historical_df, forecast_df)
+    def compute_stockout_timeline(
+        self,
+        historical_df: pd.DataFrame,
+        forecast_df: pd.DataFrame,
+        inventory_df: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        inventory = inventory_df if inventory_df is not None else self.compute(historical_df, forecast_df)
         rows: list[dict] = []
         for _, inv_row in inventory.iterrows():
             stock = float(inv_row["current_stock"])

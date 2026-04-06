@@ -16,4 +16,4 @@ models/*.pkl
 models/*.joblib
 data/raw/*.csv
 data/raw/*.parquet
-.streamlit/
+.streamlit/secrets.toml

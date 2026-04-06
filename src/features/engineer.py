@@ -66,8 +66,8 @@ def create_features(df: pd.DataFrame, config: dict) -> pd.DataFrame:
     for lag in spec.lag_features:
         frame[f"lag_{lag}"] = grouped["demand"].shift(lag)
 
+    shifted = grouped["demand"].shift(1)
     for window in spec.rolling_windows:
-        shifted = grouped["demand"].shift(1)
         frame[f"rolling_mean_{window}"] = shifted.groupby(frame["sku"]).transform(
             lambda series: series.rolling(window, min_periods=1).mean()
         )

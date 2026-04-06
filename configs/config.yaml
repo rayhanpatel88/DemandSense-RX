@@ -15,8 +15,8 @@ forecasting:
 
 models:
   lgbm:
-    n_estimators: 120
-    learning_rate: 0.05
+    n_estimators: 80
+    learning_rate: 0.06
     max_depth: 6
     num_leaves: 31
     min_child_samples: 20
@@ -24,7 +24,6 @@ models:
     colsample_bytree: 0.8
     reg_alpha: 0.1
     reg_lambda: 0.1
-    verbose: -1
   baseline:
     window: 7
 

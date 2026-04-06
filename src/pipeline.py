@@ -64,7 +64,7 @@ def run_pipeline(
 
     inventory_engine = InventoryEngine(config)
     inventory_df = inventory_engine.compute(raw_df, future_df)
-    stockout_timeline = inventory_engine.compute_stockout_timeline(raw_df, future_df)
+    stockout_timeline = inventory_engine.compute_stockout_timeline(raw_df, future_df, inventory_df=inventory_df)
     slotting_df = _build_slotting_plan(future_df, inventory_df)
 
     shap_data = _compute_shap(lgbm, train_df, feature_cols) if include_shap else {}
