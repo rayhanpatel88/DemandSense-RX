@@ -1,11 +1,15 @@
-"""LightGBM demand forecasting model with residual-based intervals."""
+"""LightGBM demand forecasting model with a safe cloud fallback."""
 
+import os
+import sys
+from pathlib import Path
+
+import joblib
+import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import joblib
-from pathlib import Path
-import lightgbm as lgb
 from scipy import stats
+from sklearn.ensemble import GradientBoostingRegressor
 
 from src.models.base import BaseForecaster
 from src.utils.logger import get_logger
@@ -18,6 +22,7 @@ class LGBMForecaster(BaseForecaster):
 
     def __init__(self, config: dict):
         cfg = config["models"]["lgbm"]
+        safe_mode = sys.version_info >= (3, 14) or os.getenv("DEMANDSENSE_SAFE_MODEL", "0") == "1"
         self.params_base = {
             "n_estimators": cfg.get("n_estimators", 120),
             "learning_rate": cfg.get("learning_rate", 0.05),
@@ -28,8 +33,9 @@ class LGBMForecaster(BaseForecaster):
             "colsample_bytree": cfg.get("colsample_bytree", 0.8),
             "reg_alpha": cfg.get("reg_alpha", 0.1),
             "reg_lambda": cfg.get("reg_lambda", 0.1),
+            "force_col_wise": True,
             "verbose": -1,
-            "n_jobs": -1,
+            "n_jobs": 1 if safe_mode else cfg.get("n_jobs", -1),
         }
         self.quantiles = config["forecasting"].get("quantiles", [0.1, 0.5, 0.9])
         self._models: dict = {}  # keyed by "point"
@@ -37,16 +43,31 @@ class LGBMForecaster(BaseForecaster):
         self.interval_z_ = float(stats.norm.ppf(max(self.quantiles)))
         self.global_residual_std_ = 1.0
         self.sku_residual_std_: dict = {}
+        self.use_safe_fallback_ = safe_mode
+        self.model_backend_ = "gradient_boosting" if safe_mode else "lightgbm"
 
     def fit(self, df: pd.DataFrame, feature_cols: list, target_col: str = "demand"):
         self.feature_cols_ = feature_cols
         X = df[feature_cols]
         y = df[target_col].values
 
-        # Point forecast model (RMSE objective)
-        logger.info("Training LightGBM point forecast model")
-        point_params = {**self.params_base, "objective": "regression", "metric": "rmse"}
-        self._models["point"] = lgb.LGBMRegressor(**point_params)
+        if self.use_safe_fallback_:
+            logger.warning(
+                "Python %s detected. Using GradientBoostingRegressor fallback for deployment stability.",
+                ".".join(str(part) for part in sys.version_info[:3]),
+            )
+            self._models["point"] = GradientBoostingRegressor(
+                n_estimators=self.params_base["n_estimators"],
+                learning_rate=self.params_base["learning_rate"],
+                max_depth=self.params_base["max_depth"],
+                subsample=self.params_base["subsample"],
+                min_samples_leaf=self.params_base["min_child_samples"],
+                random_state=42,
+            )
+        else:
+            logger.info("Training LightGBM point forecast model")
+            point_params = {**self.params_base, "objective": "regression", "metric": "rmse"}
+            self._models["point"] = lgb.LGBMRegressor(**point_params)
         self._models["point"].fit(X, y)
         fitted = np.clip(self._models["point"].predict(X), 0, None)
         residuals = np.abs(y - fitted)
@@ -88,7 +109,7 @@ class LGBMForecaster(BaseForecaster):
         model = self._models.get("point")
         if model is None:
             return pd.DataFrame()
-        imp = model.feature_importances_
+        imp = getattr(model, "feature_importances_", np.zeros(len(self.feature_cols_), dtype=float))
         cols = self.feature_cols_
         return (
             pd.DataFrame({"feature": cols, "importance": imp})

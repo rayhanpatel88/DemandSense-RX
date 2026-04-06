@@ -18,7 +18,20 @@ except ImportError:
     from src.app.ui import apply_page_config, get_pipeline_data, metric_panel, render_header, render_sidebar, style_plotly
 
 apply_page_config("DemandSense-RX")
-data = get_pipeline_data()
+st.markdown(
+    """
+    <div class="panel panel-hero" style="margin-bottom:1rem;">
+        <div class="page-kicker">System Warmup</div>
+        <div class="page-subtitle" style="margin-bottom:0;">
+            Initializing the planning engine, generating forecasts, and loading the executive workspace.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+with st.spinner("Loading demand intelligence and decision layers..."):
+    data = get_pipeline_data()
+
 render_sidebar("overview", data)
 render_header(
     "Operational Command",
