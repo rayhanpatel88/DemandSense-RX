@@ -85,6 +85,29 @@ The first run will:
 
 Subsequent runs load cached data and models for fast startup.
 
+### Deployment
+
+This repository is ready to deploy as a Streamlit app with:
+
+- Entry point: `streamlit_app.py`
+- Python runtime: `runtime.txt` (`python-3.11`)
+- Dependencies: `requirements.txt`
+- Streamlit config: `.streamlit/config.toml`
+
+For Streamlit Community Cloud:
+
+1. Create a new app from this repository.
+2. Set the branch to `main`.
+3. Set the main file path to `streamlit_app.py`.
+4. Deploy using the default dependency install flow.
+
+For other hosts:
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py --server.headless true
+```
+
 ---
 
 ## Features
