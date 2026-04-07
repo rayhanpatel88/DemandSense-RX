@@ -17,74 +17,74 @@ except ImportError:
         sys.path.insert(0, str(project_root))
     from src.app.ui import apply_page_config, get_pipeline_data, metric_panel, render_header, render_sidebar, style_plotly
 
+
 apply_page_config("DemandSense-RX")
-st.markdown(
-    """
-    <div class="panel panel-hero" style="margin-bottom:1rem;">
-        <div class="page-kicker">Workspace Initialization</div>
-        <div class="page-subtitle" style="margin-bottom:0;">
-            Syncing forecast intelligence, replenishment signals, and warehouse execution context into one responsive command surface.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 with st.spinner("Loading demand intelligence and decision layers..."):
     data = get_pipeline_data()
 
 render_sidebar("overview", data)
 render_header(
-    "Operational Command",
-    "Executive Overview",
-    "A portfolio-level control surface for demand sensing, stock exposure, and warehouse execution pressure. Every view is tied to the same recursive forecast and operating policy outputs.",
+    "Executive Summary",
+    "Business Planning Overview",
+    "This page shows expected demand, stock risk, and the products that need attention first in plain business terms.",
 )
 
 future_df = data["future_df"]
 raw_df = data["raw_df"]
 inventory_df = data["inventory_df"]
 reliability_df = data["reliability_df"]
-backtest_summary = data["backtest_results"]["summary"]
 slotting_df = data["slotting_df"]
 future_7d = data["future_7d_df"]
 
 forecast_total = int(future_df["forecast"].sum())
+active_skus = int(raw_df["sku"].nunique())
 reorder_count = int(inventory_df["reorder_needed"].sum())
 high_risk = int(inventory_df["stockout_risk"].isin(["critical", "high"]).sum())
+critical_risk = int(inventory_df["stockout_risk"].eq("critical").sum())
 reliability_score = reliability_df["reliability_score"].mean() if not reliability_df.empty else 0.0
 wape = float(data["holdout_metrics"].get("WAPE", 0.0))
+avg_days_to_stockout = float(inventory_df["days_to_stockout"].replace([float("inf")], None).dropna().mean()) if "days_to_stockout" in inventory_df else 0.0
+
+if critical_risk > 0:
+    top_message = f"{critical_risk} products are at immediate risk of stocking out."
+elif high_risk > 0:
+    top_message = f"{high_risk} products need attention soon to avoid missed sales."
+else:
+    top_message = "No products are currently in the highest stock risk bands."
 
 st.markdown(
     f"""
-    <div class="panel panel-hero" style="margin-bottom:1.35rem;">
-        <div class="page-kicker" style="margin-bottom:0.35rem;">Executive Signal</div>
-        <div style="display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(240px, 0.9fr); gap:1rem; align-items:stretch;">
+    <div class="panel panel-hero">
+        <div class="page-kicker" style="margin-bottom:0.35rem;">What Needs Attention</div>
+        <div style="display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(250px, 0.95fr); gap:1.15rem; align-items:stretch;">
             <div>
-                <div style="font-family:'Space Grotesk',sans-serif; font-size:clamp(1.8rem, 4vw, 3rem); font-weight:700; color:var(--text); line-height:1.02;">
-                    Forecast demand is rising faster than inventory protection across the most exposed SKUs.
+                <div style="font-family:'Space Grotesk',sans-serif; font-size:clamp(1.7rem, 3.6vw, 2.7rem); font-weight:700; color:var(--text); line-height:1.08;">
+                    {top_message}
                 </div>
-                <div class="page-subtitle" style="margin-top:0.75rem; margin-bottom:0;">
-                    DemandSense-RX is projecting {forecast_total:,} units over the next 30 days. {reorder_count} items sit below policy and {high_risk} SKUs remain in high-risk or critical exposure bands, making replenishment timing the key operating lever right now.
+                <div class="page-subtitle" style="margin-top:0.8rem; margin-bottom:0;">
+                    We expect demand of <strong>{forecast_total:,} units</strong> over the next 30 days across <strong>{active_skus}</strong> products.
+                    Right now, <strong>{reorder_count}</strong> products are below their restocking threshold and should be reviewed first.
                 </div>
                 <div class="hero-badges" style="margin-top:1rem;">
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>{raw_df['sku'].nunique()} active SKUs</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>{future_df['date'].nunique()} day forecast horizon</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>{slotting_df['zone'].nunique()} warehouse zones mapped</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>{active_skus} active products</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>{future_df['date'].nunique()} days ahead</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>{slotting_df['zone'].nunique()} warehouse zones</div>
                 </div>
             </div>
-            <div class="glass-card" style="display:flex; flex-direction:column; justify-content:space-between;">
+            <div class="glass-card" style="display:flex; flex-direction:column; justify-content:space-between; gap:0.9rem;">
                 <div>
-                    <div class="glass-label">Forecast Quality</div>
-                    <div class="glass-value">Model Trust {reliability_score:.0%}</div>
-                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Recursive WAPE {wape:.1f}% across the current planning run</div>
+                    <div class="glass-label">Forecast Confidence</div>
+                    <div class="glass-value">{reliability_score:.0%}</div>
+                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Average model confidence for the current planning run</div>
                 </div>
-                <div class="status-rail" style="margin-top:1rem;">
+                <div class="status-rail">
                     <div class="status-card">
-                        <div class="status-card-label">Reorder Queue</div>
-                        <div class="status-card-value">{reorder_count}</div>
+                        <div class="status-card-label">Model Error</div>
+                        <div class="status-card-value">{wape:.1f}%</div>
                     </div>
                     <div class="status-card">
-                        <div class="status-card-label">Risk SKUs</div>
-                        <div class="status-card-value">{high_risk}</div>
+                        <div class="status-card-label">Avg Days of Cover</div>
+                        <div class="status-card-value">{avg_days_to_stockout:.0f}d</div>
                     </div>
                 </div>
             </div>
@@ -97,125 +97,159 @@ st.markdown(
 for col, html in zip(
     st.columns(4),
     [
-        metric_panel("30-Day Forecasted Demand", f"{forecast_total:,}", f"{raw_df['sku'].nunique()} active SKUs in planning scope"),
-        metric_panel("Replenishment Queue", f"{reorder_count}", "Current stock below reorder policy threshold"),
-        metric_panel("Operational Risk", f"{high_risk}", "High and critical stockout exposure"),
-        metric_panel("Forecast Reliability", f"{reliability_score:.0%}", f"Backtested recursive model WAPE {wape:.1f}%"),
+        metric_panel("Expected Demand, Next 30 Days", f"{forecast_total:,}", "Total units we expect customers to buy"),
+        metric_panel("Products To Reorder", f"{reorder_count}", "Items already below their restocking trigger"),
+        metric_panel("Products At Risk", f"{high_risk}", "Items in high or critical stockout risk"),
+        metric_panel("Forecast Confidence", f"{reliability_score:.0%}", f"Average reliability across products, with {wape:.1f}% model error"),
     ],
 ):
     with col:
         st.markdown(html, unsafe_allow_html=True)
 
-main_left, main_right = st.columns([1.7, 0.95], gap="large")
+st.markdown(
+    f"""
+    <div class="panel">
+        <div class="page-kicker" style="margin-bottom:0.45rem;">In Plain English</div>
+        <div class="note" style="color:var(--text);">
+            <strong>Demand is the number of units we expect to sell.</strong><br>
+            <strong>Products to reorder</strong> are already below their target stock level.<br>
+            <strong>Products at risk</strong> may run out before replenishment arrives.<br>
+            <strong>Forecast confidence</strong> tells you how much trust to place in the numbers.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+main_left, main_right = st.columns([1.65, 1.0], gap="large")
 
 with main_left:
-    history = raw_df.groupby("date")["demand"].sum().reset_index()
-    forecast = future_df.groupby("date")["forecast"].sum().reset_index()
-    history_fig = go.Figure()
-    history_fig.add_trace(
+    history = raw_df.groupby("date", as_index=False)["demand"].sum()
+    forecast = future_df.groupby("date", as_index=False)["forecast"].sum()
+
+    demand_fig = go.Figure()
+    demand_fig.add_trace(
         go.Scatter(
             x=history.tail(180)["date"],
             y=history.tail(180)["demand"],
             mode="lines",
-            name="Historical",
-            line=dict(color="#818cf8", width=2.1),
+            name="Actual demand",
+            line=dict(color="#64748b", width=2.2),
         )
     )
-    history_fig.add_trace(
+    demand_fig.add_trace(
         go.Scatter(
             x=forecast["date"],
             y=forecast["forecast"],
             mode="lines",
-            name="Recursive forecast",
-            line=dict(color="#c7d2fe", width=2.4),
+            name="Expected demand",
+            line=dict(color="#4f46e5", width=2.8),
             fill="tozeroy",
-            fillcolor="rgba(99,102,241,0.10)",
+            fillcolor="rgba(79,70,229,0.12)",
         )
     )
-    history_fig = style_plotly(history_fig, 390)
-    history_fig.update_layout(
+    demand_fig = style_plotly(demand_fig, 390)
+    demand_fig.update_layout(
         legend=dict(orientation="h", y=1.08, x=0),
         xaxis_title="",
         yaxis_title="Units",
         hovermode="x unified",
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Demand Flow")
-    st.caption("Historical volume transitions directly into the recursive forecast path, giving planners one continuous view of movement.")
-    st.plotly_chart(history_fig, width="stretch")
+    st.subheader("Demand Trend And Next 30 Days")
+    st.caption("The grey line shows what customers bought recently. The blue line shows what we expect them to buy next.")
+    st.plotly_chart(demand_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    zone_pressure = future_7d.groupby("sku")["forecast"].sum().sort_values(ascending=False).head(12).reset_index()
-    zone_pressure["rank"] = zone_pressure.index + 1
-    zone_pressure["label"] = zone_pressure["sku"] + " // #" + zone_pressure["rank"].astype(str)
-    slot_fig = px.bar(
-        zone_pressure,
+    top_products = future_7d.groupby("sku", as_index=False)["forecast"].sum().sort_values("forecast", ascending=False).head(10)
+    top_products["sku"] = top_products["sku"].astype(str)
+    pressure_fig = px.bar(
+        top_products.sort_values("forecast"),
         x="forecast",
-        y="label",
+        y="sku",
         orientation="h",
+        text_auto=".0f",
         color="forecast",
-        color_continuous_scale=["#1e2d4e", "#6366f1"],
+        color_continuous_scale=["#c7d2fe", "#4f46e5"],
     )
-    slot_fig = style_plotly(slot_fig, 340)
-    slot_fig.update_layout(
+    pressure_fig = style_plotly(pressure_fig, 355)
+    pressure_fig.update_layout(
         coloraxis_showscale=False,
+        xaxis_title="Expected units over the next 7 days",
         yaxis_title="",
-        xaxis_title="Next 7-day demand intensity",
-        yaxis={"categoryorder": "total ascending"},
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Near-Term Pressure Map")
-    st.caption("These products are driving the next wave of slotting and pick pressure across the network.")
-    st.plotly_chart(slot_fig, width="stretch")
+    st.subheader("Top Products Driving Demand This Week")
+    st.caption("These products are expected to account for the most near-term sales, so they deserve the closest stock monitoring.")
+    st.plotly_chart(pressure_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_right:
-    risk_mix = inventory_df["stockout_risk"].value_counts().rename_axis("risk").reset_index(name="count")
+    risk_order = ["critical", "high", "medium", "low"]
+    risk_mix = inventory_df["stockout_risk"].value_counts().reindex(risk_order, fill_value=0).reset_index()
+    risk_mix.columns = ["risk", "count"]
+    risk_mix["label"] = risk_mix["risk"].str.title()
     risk_fig = px.bar(
         risk_mix,
-        x="risk",
-        y="count",
+        x="count",
+        y="label",
+        orientation="h",
+        text="count",
         color="risk",
-        color_discrete_map={"critical": "#f87171", "high": "#fb923c", "medium": "#94a3b8", "low": "#34d399"},
+        color_discrete_map={"critical": "#dc2626", "high": "#f97316", "medium": "#64748b", "low": "#10b981"},
     )
-    risk_fig = style_plotly(risk_fig, 280)
-    risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="SKU count")
+    risk_fig = style_plotly(risk_fig, 300)
+    risk_fig.update_layout(showlegend=False, xaxis_title="Number of products", yaxis_title="")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Risk Mix")
+    st.subheader("How Much Stock Risk We Have")
+    st.caption("This shows how many products fall into each risk level, from critical down to low.")
     st.plotly_chart(risk_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     weakest = reliability_df.sort_values("reliability_score").head(4) if not reliability_df.empty else None
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Forecast Exceptions")
+    st.subheader("Where To Treat The Forecast Carefully")
+    st.caption("These products have the least reliable forecast signals, so decisions around them need extra judgement.")
     if weakest is not None and not weakest.empty:
         for _, row in weakest.iterrows():
             st.markdown(
-                f"<div class='note' style='margin-bottom:0.8rem;'><span class='tag'>{row['sku']}</span>{row['reliability_explanation']}</div>",
+                f"<div class='note' style='margin-bottom:0.85rem;'><span class='tag'>{row['sku']}</span>{row['reliability_explanation']}</div>",
                 unsafe_allow_html=True,
             )
     else:
-        st.markdown("<div class='note'>No reliability exceptions were generated.</div>", unsafe_allow_html=True)
+        st.markdown("<div class='note'>All products have usable forecast confidence summaries.</div>", unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-    urgent = inventory_df.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(6)
+    urgent = inventory_df.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(5)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Priority Actions")
+    st.subheader("Recommended Actions Right Now")
+    st.caption("This is the short list of products that deserve immediate operational attention.")
     for _, row in urgent.iterrows():
         st.markdown(
-            f"<div class='note' style='margin-bottom:0.8rem;'><span class='tag'>{row['sku']}</span>{row['explanation']}</div>",
+            f"<div class='note' style='margin-bottom:0.85rem;'><span class='tag'>{row['sku']}</span>{row['explanation']}</div>",
             unsafe_allow_html=True,
         )
     st.markdown("</div>", unsafe_allow_html=True)
 
 ops_left, ops_mid, ops_right = st.columns([1.1, 1.15, 0.95], gap="large")
+
 with ops_left:
-    top_inventory = inventory_df.head(10).copy()
+    reorder_table = inventory_df.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(10).copy()
+    reorder_table = reorder_table.rename(
+        columns={
+            "sku": "Product",
+            "current_stock": "Current Stock",
+            "reorder_point": "Reorder Level",
+            "reorder_qty": "Suggested Order",
+            "stockout_risk": "Risk Level",
+        }
+    )
+    reorder_table["Risk Level"] = reorder_table["Risk Level"].str.title()
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Reorder Queue")
-    st.caption("Fastest path to stabilizing service level across the most constrained inventory positions.")
+    st.subheader("Products To Review First")
+    st.caption("A simple restocking queue showing which products are most likely to need action soon.")
     st.dataframe(
-        top_inventory[["sku", "current_stock", "reorder_point", "reorder_qty", "stockout_risk"]],
+        reorder_table[["Product", "Current Stock", "Reorder Level", "Suggested Order", "Risk Level"]],
         width="stretch",
         hide_index=True,
         height=330,
@@ -223,31 +257,31 @@ with ops_left:
     st.markdown("</div>", unsafe_allow_html=True)
 
 with ops_mid:
-    slotting = slotting_df.head(15).copy()
-    slotting["status"] = slotting["stockout_risk"].str.upper()
-    status_fig = go.Figure()
-    status_fig.add_trace(
+    cover_df = slotting_df.head(15).copy()
+    bubble_size = cover_df["forecast_30d_total"].clip(lower=1)
+    cover_fig = go.Figure()
+    cover_fig.add_trace(
         go.Scatter(
-            x=slotting["forecast_30d_total"],
-            y=slotting["days_to_stockout"],
+            x=cover_df["forecast_30d_total"],
+            y=cover_df["days_to_stockout"],
             mode="markers+text",
-            text=slotting["sku"],
+            text=cover_df["sku"],
             textposition="top center",
             marker=dict(
-                size=slotting["forecast_30d_total"] / slotting["forecast_30d_total"].max() * 24 + 8,
-                color=slotting["days_to_stockout"],
-                colorscale=[[0, "#f87171"], [0.45, "#fb923c"], [1, "#6366f1"]],
-                line=dict(color="#0c1220", width=1.5),
+                size=bubble_size / bubble_size.max() * 24 + 8,
+                color=cover_df["days_to_stockout"],
+                colorscale=[[0, "#dc2626"], [0.45, "#f97316"], [1, "#4f46e5"]],
+                line=dict(color="#ffffff", width=1),
                 showscale=False,
             ),
         )
     )
-    status_fig = style_plotly(status_fig, 330)
-    status_fig.update_layout(xaxis_title="30-day forecast units", yaxis_title="Days to stockout")
+    cover_fig = style_plotly(cover_fig, 330)
+    cover_fig.update_layout(xaxis_title="Expected demand over the next 30 days", yaxis_title="Days until stockout")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Volume vs Cover")
-    st.caption("The fault line is where high demand meets thin inventory cover.")
-    st.plotly_chart(status_fig, width="stretch")
+    st.subheader("High Demand Products With Thin Stock Cover")
+    st.caption("Products near the bottom-right are the most exposed: strong expected demand and not much time before stock runs out.")
+    st.plotly_chart(cover_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with ops_right:
@@ -263,18 +297,18 @@ with ops_right:
     st.markdown(
         f"""
         <div class="panel" style="margin-bottom:1rem;">
-            <div class="page-kicker" style="margin-bottom:0.4rem;">Zone Spotlight</div>
+            <div class="page-kicker" style="margin-bottom:0.4rem;">Warehouse Focus</div>
             <div style="font-family:'Space Grotesk',sans-serif; font-size:2rem; font-weight:700; line-height:1;">{top_zone}</div>
-            <div class="page-subtitle" style="margin-top:0.5rem; margin-bottom:0.9rem;">
-                This warehouse zone is carrying the highest near-term demand intensity and should get the cleanest replenishment path.
+            <div class="page-subtitle" style="margin-top:0.55rem; margin-bottom:0.95rem;">
+                This zone is expected to carry the most near-term demand and may need the cleanest replenishment flow.
             </div>
             <div class="status-rail">
                 <div class="status-card">
-                    <div class="status-card-label">Zone Share</div>
+                    <div class="status-card-label">Share Of 7-Day Demand</div>
                     <div class="status-card-value">{zone_share:.0%}</div>
                 </div>
                 <div class="status-card">
-                    <div class="status-card-label">Forecast Units</div>
+                    <div class="status-card-label">Expected Units</div>
                     <div class="status-card-value">{top_zone_units:,}</div>
                 </div>
             </div>
@@ -283,20 +317,20 @@ with ops_right:
         unsafe_allow_html=True,
     )
 
-    top_signals = [
-        ("Reliability", f"{reliability_score:.0%}"),
-        ("Backtest WAPE", f"{wape:.1f}%"),
-        ("Critical + High", f"{high_risk}"),
-        ("Forecast Horizon", f"{future_df['date'].nunique()}D"),
+    snapshot_items = [
+        ("Forecast confidence", f"{reliability_score:.0%}"),
+        ("Model error", f"{wape:.1f}%"),
+        ("Products at risk", f"{high_risk}"),
+        ("Planning window", f"{future_df['date'].nunique()} days"),
     ]
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Planning Snapshot")
-    st.caption("A compact brand card for the operating context behind this run.")
+    st.subheader("Quick Snapshot")
+    st.caption("A short plain-language summary of the current planning run.")
     st.markdown(
         "".join(
             [
                 f"<div class='note' style='display:flex; justify-content:space-between; gap:0.75rem; padding:0.72rem 0; border-bottom:1px solid var(--line);'><span>{label}</span><strong style='color:var(--text);'>{value}</strong></div>"
-                for label, value in top_signals
+                for label, value in snapshot_items
             ]
         ),
         unsafe_allow_html=True,

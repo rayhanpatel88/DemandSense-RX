@@ -110,7 +110,7 @@ def apply_page_config(page_title: str) -> None:
         .block-container {
             max-width: 1500px;
             padding-top: 1rem;
-            padding-bottom: 2rem;
+            padding-bottom: 2.6rem;
             padding-left: 1.1rem;
             padding-right: 1.1rem;
         }
@@ -274,7 +274,7 @@ def apply_page_config(page_title: str) -> None:
             border: 1px solid var(--line);
             border-radius: 22px;
             padding: 1.1rem 1.15rem;
-            margin-bottom: 1.1rem;
+            margin-bottom: 1.35rem;
             box-shadow: 0 4px 24px var(--shadow), 0 1px 4px rgba(0,0,0,0.06);
             transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
         }
@@ -298,7 +298,7 @@ def apply_page_config(page_title: str) -> None:
             border-radius: 22px;
             padding: 1.1rem 1.1rem 1rem 1.2rem;
             min-height: 148px;
-            margin-bottom: 1.1rem;
+            margin-bottom: 1.35rem;
             box-shadow: 0 4px 20px var(--shadow);
             transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
         }
@@ -610,7 +610,7 @@ def apply_page_config(page_title: str) -> None:
             position: relative;
             overflow: hidden;
             padding: 1.4rem;
-            margin-bottom: 1.15rem;
+            margin-bottom: 1.35rem;
             background:
                 radial-gradient(circle at top right, var(--card-glow), transparent 42%),
                 linear-gradient(135deg, var(--hero-grad-a) 0%, var(--hero-grad-b) 58%, var(--hero-grad-c) 100%);
@@ -635,7 +635,11 @@ def apply_page_config(page_title: str) -> None:
         }
         div[data-testid="stHorizontalBlock"] {
             align-items: flex-start !important;
-            gap: 1.1rem !important;
+            gap: 1.35rem !important;
+        }
+        div[data-testid="stPlotlyChart"] {
+            margin-top: 0.55rem;
+            margin-bottom: 0.2rem;
         }
         @media (max-width: 768px) {
             .block-container { padding-top: 0.6rem; padding-left: 0.7rem; padding-right: 0.7rem; }
@@ -715,9 +719,9 @@ def render_header(kicker: str, title: str, subtitle: str) -> None:
                 <div class="page-title">{title}</div>
                 <div class="page-subtitle">{subtitle}</div>
                 <div class="hero-badges">
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Brand-led UI system</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Mobile to desktop ready</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Real-time planning signals</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Clear business summary</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Simple action guidance</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Desktop and mobile ready</div>
                 </div>
             </div>
             """,
@@ -740,13 +744,13 @@ def render_header(kicker: str, title: str, subtitle: str) -> None:
             <div class="hero-side">
                 <div class="glass-card">
                     <div class="glass-label">Interface Mode</div>
-                    <div class="glass-value">Precision Dashboard</div>
-                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Balanced for touch, laptop, and widescreen workflows</div>
+                    <div class="glass-value">Executive View</div>
+                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Designed to highlight what changed, what matters, and what to do next</div>
                 </div>
                 <div class="glass-card">
                     <div class="glass-label">Operational Status</div>
-                    <div class="glass-value">Live planning fabric</div>
-                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Forecast, inventory, and warehouse views aligned on one design language</div>
+                    <div class="glass-value">Live planning view</div>
+                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Forecast, stock, and warehouse signals shown in the same business language</div>
                 </div>
             </div>
             """,
@@ -760,7 +764,7 @@ def metric_panel(label: str, value: str, detail: str) -> str:
         f'<div class="metric-label">{label}</div>'
         f'<div class="metric-value">{value}</div>'
         f'<div class="metric-detail">{detail}</div>'
-        '<div class="metric-chip">DemandSense-RX</div>'
+        '<div class="metric-chip">Business Snapshot</div>'
         "</div>"
     )
 
