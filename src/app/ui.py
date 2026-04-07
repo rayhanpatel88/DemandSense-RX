@@ -98,6 +98,8 @@ def apply_page_config(page_title: str) -> None:
             --table-hover:$table_hover;
         }
         html, body, [class*="css"] { font-family:'IBM Plex Sans', sans-serif; }
+        /* Hide native Streamlit multipage nav — custom nav in sidebar replaces it */
+        [data-testid="stSidebarNav"] { display: none !important; }
         .stApp {
             color: var(--text);
             background:
@@ -272,6 +274,7 @@ def apply_page_config(page_title: str) -> None:
             border: 1px solid var(--line);
             border-radius: 22px;
             padding: 1.1rem 1.15rem;
+            margin-bottom: 1.1rem;
             box-shadow: 0 4px 24px var(--shadow), 0 1px 4px rgba(0,0,0,0.06);
             transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
         }
@@ -295,6 +298,7 @@ def apply_page_config(page_title: str) -> None:
             border-radius: 22px;
             padding: 1.1rem 1.1rem 1rem 1.2rem;
             min-height: 148px;
+            margin-bottom: 1.1rem;
             box-shadow: 0 4px 20px var(--shadow);
             transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
         }
@@ -624,6 +628,14 @@ def apply_page_config(page_title: str) -> None:
         @media (max-width: 1200px) {
             .block-container { padding-left: 0.9rem; padding-right: 0.9rem; }
             .page-shell { padding: 1.15rem; }
+        }
+        /* Ensure vertical stacking inside columns always has breathing room */
+        div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+            margin-bottom: 0 !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            align-items: flex-start !important;
+            gap: 1.1rem !important;
         }
         @media (max-width: 768px) {
             .block-container { padding-top: 0.6rem; padding-left: 0.7rem; padding-right: 0.7rem; }
