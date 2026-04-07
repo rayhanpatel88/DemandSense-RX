@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 from pathlib import Path
+from string import Template
 from typing import Any, Optional
 
 import streamlit as st
@@ -27,14 +28,6 @@ PAGE_ICONS = {
     "backtesting": "history",
     "scenario": "tune",
 }
-
-PLOTLY_THEME = {
-    "paper_bgcolor": "#07111f",
-    "plot_bgcolor": "#07111f",
-    "font": {"family": "IBM Plex Sans, sans-serif", "color": "#dfe6ff"},
-    "legend": {"font": {"color": "#9ca8c7"}},
-}
-
 
 @st.cache_resource(show_spinner="Running DemandSense-RX pipeline...")
 def get_pipeline_data() -> dict:
@@ -62,64 +55,96 @@ def get_explainability_data() -> dict:
 
 def apply_page_config(page_title: str) -> None:
     st.set_page_config(page_title=page_title, page_icon="■", layout="wide", initial_sidebar_state="expanded")
-    st.markdown(
+    theme = _get_theme_palette()
+    st.session_state.setdefault("theme_mode", "dark")
+    css = Template(
         """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
         :root{
-            --bg:#060d1b;
-            --bg-soft:#081224;
-            --surface:#0b1528;
-            --surface-2:#0f1b31;
-            --surface-3:#13213d;
-            --line:rgba(79,104,153,0.24);
-            --line-strong:rgba(124,145,197,0.38);
-            --text:#e6ecff;
-            --muted:#93a2c7;
-            --muted-2:#637396;
-            --accent:#8f84ff;
-            --accent-2:#c7c2ff;
-            --accent-soft:rgba(143,132,255,0.12);
-            --good:#87d2bc;
-            --warn:#ffc57f;
-            --bad:#ff8d9f;
+            --bg:$bg;
+            --bg-soft:$bg_soft;
+            --surface:$surface;
+            --surface-2:$surface_2;
+            --surface-3:$surface_3;
+            --line:$line;
+            --line-strong:$line_strong;
+            --text:$text;
+            --muted:$muted;
+            --muted-2:$muted_2;
+            --accent:$accent;
+            --accent-2:$accent_2;
+            --accent-soft:$accent_soft;
+            --good:$good;
+            --warn:$warn;
+            --bad:$bad;
+            --shadow:$shadow;
+            --card-glow:$card_glow;
+            --app-grad-a:$app_grad_a;
+            --app-grad-b:$app_grad_b;
+            --app-grad-c:$app_grad_c;
+            --sidebar-grad-a:$sidebar_grad_a;
+            --sidebar-grad-b:$sidebar_grad_b;
+            --hero-grad-a:$hero_grad_a;
+            --hero-grad-b:$hero_grad_b;
+            --hero-grad-c:$hero_grad_c;
+            --panel-grad-a:$panel_grad_a;
+            --panel-grad-b:$panel_grad_b;
+            --metric-grad-a:$metric_grad_a;
+            --metric-grad-b:$metric_grad_b;
+            --input-bg:$input_bg;
+            --table-head:$table_head;
+            --table-body:$table_body;
+            --table-hover:$table_hover;
         }
         html, body, [class*="css"] { font-family:'IBM Plex Sans', sans-serif; }
         .stApp {
             color: var(--text);
             background:
-                radial-gradient(circle at top left, rgba(143,132,255,0.14), transparent 30%),
-                radial-gradient(circle at top right, rgba(90,129,255,0.10), transparent 28%),
-                linear-gradient(180deg, #07101e 0%, #040913 100%);
+                radial-gradient(circle at top left, var(--app-grad-a), transparent 34%),
+                radial-gradient(circle at top right, var(--app-grad-b), transparent 30%),
+                linear-gradient(180deg, var(--app-grad-c) 0%, var(--bg) 100%);
         }
-        .block-container { max-width: 1500px; padding-top: 1.0rem; padding-bottom: 2rem; }
+        .block-container {
+            max-width: 1500px;
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+            padding-left: 1.1rem;
+            padding-right: 1.1rem;
+        }
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, #070d19 0%, #081120 100%);
-            border-right: 1px solid rgba(74,96,141,0.24);
+            background: linear-gradient(180deg, var(--sidebar-grad-a) 0%, var(--sidebar-grad-b) 100%);
+            border-right: 1px solid var(--line);
         }
         [data-testid="stSidebar"] * { color: var(--text) !important; }
+        [data-testid="stSidebar"] .block-container {
+            padding-top: 1rem;
+            padding-left: 0.9rem;
+            padding-right: 0.9rem;
+        }
         [data-testid="stSidebar"] .stButton button {
-            background: linear-gradient(135deg, #5a44ff 0%, #9f97ff 100%);
-            color: #f7f6ff !important;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+            color: #fcfcff !important;
             border: none;
-            border-radius: 6px;
+            border-radius: 999px;
             font-size: 0.69rem;
             font-weight: 700;
             letter-spacing: 0.16em;
             text-transform: uppercase;
-            min-height: 2.6rem;
-            box-shadow: 0 14px 32px rgba(90,68,255,0.24);
+            min-height: 2.8rem;
+            box-shadow: 0 18px 38px var(--card-glow);
         }
         [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"] {
             border-left: 2px solid transparent;
-            border-radius: 0;
-            padding: 0.62rem 0.75rem;
+            border-radius: 14px;
+            padding: 0.75rem 0.9rem;
             background: transparent;
-            transition: background-color 0.18s ease, border-color 0.18s ease;
+            transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
         }
         [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:hover {
-            background: rgba(255,255,255,0.04);
+            background: var(--accent-soft);
             border-left-color: rgba(143,132,255,0.6);
+            transform: translateX(2px);
         }
         [data-testid="stSidebar"] .stSlider label,
         [data-testid="stSidebar"] .stSelectbox label,
@@ -139,15 +164,25 @@ def apply_page_config(page_title: str) -> None:
             letter-spacing: -0.03em;
         }
         .page-shell {
-            padding: 1.1rem 0 1.5rem 0;
-            margin-bottom: 1.3rem;
-            border-bottom: 1px solid rgba(82,103,149,0.18);
+            position: relative;
+            overflow: hidden;
+            padding: 1.35rem;
+            margin-bottom: 1.15rem;
+            background:
+                radial-gradient(circle at top right, var(--card-glow), transparent 38%),
+                linear-gradient(135deg, var(--hero-grad-a) 0%, var(--hero-grad-b) 58%, var(--hero-grad-c) 100%);
+            border: 1px solid var(--line);
+            border-radius: 28px;
+            box-shadow: 0 26px 80px var(--shadow);
         }
-        .page-header-grid {
-            display:grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 1rem;
-            align-items:end;
+        .page-shell::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            background:
+                linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.04) 50%, transparent 100%);
+            opacity:0.4;
+            pointer-events:none;
         }
         .page-kicker {
             font-size: 0.67rem;
@@ -158,24 +193,72 @@ def apply_page_config(page_title: str) -> None:
             margin-bottom: 0.5rem;
         }
         .page-title {
-            font-size: 3rem;
-            line-height: 0.98;
+            font-size: clamp(2.35rem, 5vw, 4.1rem);
+            line-height: 0.95;
             font-weight: 700;
             margin: 0 0 0.45rem 0;
-            text-transform: uppercase;
         }
         .page-subtitle {
-            max-width: 62rem;
+            max-width: 58rem;
             color: var(--muted);
             font-size: 1rem;
             line-height: 1.55;
         }
+        .hero-badges {
+            display:flex;
+            flex-wrap:wrap;
+            gap:0.65rem;
+            margin-top:1rem;
+        }
+        .hero-badge {
+            display:inline-flex;
+            align-items:center;
+            gap:0.48rem;
+            padding:0.5rem 0.85rem;
+            border-radius:999px;
+            border:1px solid var(--line);
+            background:rgba(255,255,255,0.05);
+            color:var(--text);
+            font-size:0.76rem;
+            font-weight:600;
+        }
+        .hero-badge-dot {
+            width:0.55rem;
+            height:0.55rem;
+            border-radius:999px;
+            background:var(--accent);
+            box-shadow:0 0 18px var(--card-glow);
+        }
+        .hero-side {
+            display:grid;
+            gap:0.9rem;
+        }
+        .glass-card {
+            background:rgba(255,255,255,0.05);
+            border:1px solid var(--line);
+            border-radius:22px;
+            padding:1rem 1.05rem;
+            backdrop-filter: blur(12px);
+        }
+        .glass-label {
+            color: var(--muted);
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+        .glass-value {
+            margin-top:0.32rem;
+            font-family:'Space Grotesk', sans-serif;
+            font-size:1.2rem;
+            font-weight:700;
+        }
         .page-meta {
             display:flex;
             flex-direction:column;
-            align-items:flex-end;
+            align-items:flex-start;
             gap:0.4rem;
-            text-align:right;
+            text-align:left;
         }
         .page-meta-top {
             font-size: 0.66rem;
@@ -192,26 +275,27 @@ def apply_page_config(page_title: str) -> None:
         }
         .panel {
             background:
-                linear-gradient(180deg, rgba(18,30,55,0.92) 0%, rgba(10,19,35,0.96) 100%);
+                linear-gradient(180deg, var(--panel-grad-a) 0%, var(--panel-grad-b) 100%);
             border: 1px solid var(--line);
-            border-radius: 8px;
-            padding: 1.05rem 1.1rem;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+            border-radius: 24px;
+            padding: 1.1rem 1.15rem;
+            box-shadow: 0 20px 60px var(--shadow);
         }
         .panel-tight { padding: 0.82rem 0.95rem; }
         .panel-hero {
             background:
-                linear-gradient(135deg, rgba(29,46,83,0.96) 0%, rgba(16,26,48,0.96) 65%, rgba(11,18,31,0.98) 100%);
+                linear-gradient(135deg, var(--hero-grad-a) 0%, var(--hero-grad-b) 65%, var(--hero-grad-c) 100%);
             border-left: 3px solid var(--accent);
         }
         .metric-panel {
             position:relative;
             overflow:hidden;
-            background: linear-gradient(180deg, rgba(15,27,49,0.96) 0%, rgba(10,18,33,0.98) 100%);
+            background: linear-gradient(180deg, var(--metric-grad-a) 0%, var(--metric-grad-b) 100%);
             border: 1px solid var(--line);
-            border-radius: 6px;
+            border-radius: 24px;
             padding: 1rem 1rem 0.95rem 1.1rem;
-            min-height: 122px;
+            min-height: 144px;
+            box-shadow: 0 16px 34px var(--shadow);
         }
         .metric-panel::before {
             content:"";
@@ -224,24 +308,35 @@ def apply_page_config(page_title: str) -> None:
         }
         .metric-label {
             color: var(--muted);
-            font-size: 0.66rem;
+            font-size: 0.68rem;
             font-weight: 700;
             letter-spacing: 0.18em;
             text-transform: uppercase;
         }
         .metric-value {
             font-family:'Space Grotesk', sans-serif;
-            font-size: 2rem;
+            font-size: clamp(1.9rem, 3vw, 2.7rem);
             line-height: 1.04;
             font-weight: 700;
             margin-top: 0.38rem;
-            color: #f4f6ff;
+            color: var(--text);
         }
         .metric-detail {
             margin-top: 0.55rem;
             color: var(--muted);
             font-size: 0.82rem;
             line-height: 1.45;
+        }
+        .metric-chip {
+            display:inline-flex;
+            margin-top:0.85rem;
+            padding:0.28rem 0.62rem;
+            border-radius:999px;
+            background:var(--accent-soft);
+            color:var(--accent);
+            font-size:0.7rem;
+            font-weight:700;
+            letter-spacing:0.06em;
         }
         .note {
             color: var(--muted);
@@ -292,23 +387,22 @@ def apply_page_config(page_title: str) -> None:
             margin-bottom:0.7rem;
         }
         .brand-mark {
-            width:34px;
-            height:34px;
-            border-radius:6px;
+            width:44px;
+            height:44px;
+            border-radius:14px;
             display:flex;
             align-items:center;
             justify-content:center;
             overflow:hidden;
-            box-shadow:0 18px 34px rgba(90,68,255,0.24);
+            box-shadow:0 18px 34px var(--card-glow);
         }
         .brand-mark img { width:100%; height:100%; display:block; }
         .brand-name {
             font-family:'Space Grotesk', sans-serif;
-            font-size:1.0rem;
+            font-size:1.08rem;
             line-height:1;
             letter-spacing:-0.03em;
             font-weight:700;
-            text-transform:uppercase;
         }
         .brand-sub {
             color: var(--muted);
@@ -319,9 +413,9 @@ def apply_page_config(page_title: str) -> None:
             margin-top:0.22rem;
         }
         .sidebar-kpi {
-            background:linear-gradient(180deg, rgba(14,23,41,0.96) 0%, rgba(10,17,31,0.98) 100%);
-            border:1px solid rgba(76,97,139,0.24);
-            border-radius:6px;
+            background:linear-gradient(180deg, var(--panel-grad-a) 0%, var(--panel-grad-b) 100%);
+            border:1px solid var(--line);
+            border-radius:18px;
             padding:0.75rem 0.85rem;
             margin:0.35rem 0 0.75rem 0;
         }
@@ -343,11 +437,11 @@ def apply_page_config(page_title: str) -> None:
             display:inline-flex;
             align-items:center;
             gap:0.38rem;
-            padding:0.24rem 0.52rem;
-            background:rgba(90,68,255,0.24);
+            padding:0.32rem 0.7rem;
+            background:var(--accent-soft);
             border:1px solid rgba(143,132,255,0.32);
-            border-radius:4px;
-            color:#e9e7ff;
+            border-radius:999px;
+            color:var(--accent);
             font-size:0.62rem;
             font-weight:700;
             letter-spacing:0.16em;
@@ -382,9 +476,9 @@ def apply_page_config(page_title: str) -> None:
         }
         .status-card {
             background:rgba(255,255,255,0.02);
-            border:1px solid rgba(79,104,153,0.18);
-            border-radius:6px;
-            padding:0.72rem 0.78rem;
+            border:1px solid var(--line);
+            border-radius:18px;
+            padding:0.82rem 0.9rem;
         }
         .status-card-label {
             color:var(--muted);
@@ -406,42 +500,46 @@ def apply_page_config(page_title: str) -> None:
             text-transform:uppercase;
         }
         div[data-testid="stDataFrame"] {
-            border:1px solid rgba(79,104,153,0.18);
-            border-radius:6px;
+            border:1px solid var(--line);
+            border-radius:18px;
             overflow:hidden;
-            background:#09111f;
+            background:var(--table-body);
         }
-        div[data-testid="stDataFrame"] [role="table"] { color:#e3e9fb; }
+        div[data-testid="stDataFrame"] [role="table"] { color:var(--text); }
         div[data-testid="stDataFrame"] thead tr th {
-            background:#0d1830 !important;
-            color:#94a5ca !important;
+            background:var(--table-head) !important;
+            color:var(--muted) !important;
             font-size:0.67rem !important;
             text-transform:uppercase !important;
             letter-spacing:0.12em !important;
-            border-bottom:1px solid rgba(79,104,153,0.16) !important;
+            border-bottom:1px solid var(--line) !important;
         }
         div[data-testid="stDataFrame"] tbody tr td {
-            background:#09111f !important;
-            border-bottom:1px solid rgba(79,104,153,0.08) !important;
+            background:var(--table-body) !important;
+            border-bottom:1px solid var(--line) !important;
             font-size:0.77rem !important;
         }
-        div[data-testid="stDataFrame"] tbody tr:hover td { background:#0b1528 !important; }
+        div[data-testid="stDataFrame"] tbody tr:hover td { background:var(--table-hover) !important; }
         .stSelectbox div[data-baseweb="select"] > div,
         .stMultiSelect div[data-baseweb="select"] > div,
         .stTextInput input,
         .stNumberInput input {
-            background:#0b1528;
-            border:1px solid rgba(79,104,153,0.22);
-            color:#e8edff;
-            border-radius:6px;
+            background:var(--input-bg);
+            border:1px solid var(--line);
+            color:var(--text);
+            border-radius:16px;
+        }
+        .stButton button {
+            border-radius:999px;
+            border:1px solid var(--line);
         }
         .stSlider [data-baseweb="slider"] { padding-top:0.25rem; }
         .stSlider [role="slider"] { background: var(--accent); }
         .stSlider [data-testid="stTickBarMin"], .stSlider [data-testid="stTickBarMax"] { background: rgba(143,132,255,0.18); }
         .stSegmentedControl [data-baseweb="button-group"] {
-            background:#0a1426;
-            border:1px solid rgba(79,104,153,0.22);
-            border-radius:6px;
+            background:var(--input-bg);
+            border:1px solid var(--line);
+            border-radius:16px;
             padding:0.2rem;
         }
         .stSegmentedControl button[data-baseweb="button"] {
@@ -456,12 +554,35 @@ def apply_page_config(page_title: str) -> None:
             background:linear-gradient(135deg, rgba(90,68,255,0.95) 0%, rgba(159,151,255,0.95) 100%) !important;
             color:#f7f6ff !important;
         }
+        .stToggle {
+            background:rgba(255,255,255,0.04);
+            border:1px solid var(--line);
+            border-radius:18px;
+            padding:0.55rem 0.85rem;
+        }
         .stToggle [data-baseweb="checkbox"] > label { color: var(--muted) !important; }
         .stCaption { color: var(--muted) !important; }
+        div[data-testid="stMetric"] {
+            background:linear-gradient(180deg, var(--metric-grad-a) 0%, var(--metric-grad-b) 100%);
+            border:1px solid var(--line);
+            border-radius:20px;
+            padding:0.75rem 0.9rem;
+        }
+        @media (max-width: 1200px) {
+            .block-container { padding-left: 0.9rem; padding-right: 0.9rem; }
+            .page-shell { padding: 1.15rem; }
+        }
+        @media (max-width: 768px) {
+            .block-container { padding-top: 0.6rem; padding-left: 0.7rem; padding-right: 0.7rem; }
+            .page-title { line-height: 1.02; }
+            .page-shell { border-radius: 22px; }
+            .panel, .metric-panel, .sidebar-kpi { border-radius: 20px; }
+            div[data-testid="stHorizontalBlock"] { gap: 0.8rem !important; }
+        }
         </style>
-        """,
-        unsafe_allow_html=True,
-    )
+        """
+    ).substitute(theme)
+    st.markdown(css, unsafe_allow_html=True)
 
 
 def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
@@ -475,10 +596,10 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
                 </div>
                 <div>
                     <div class="brand-name">DemandSense-RX</div>
-                    <div class="brand-sub">Operational Intelligence</div>
+                    <div class="brand-sub">Forecasting and Fulfilment</div>
                 </div>
             </div>
-            <div class="security-pill">Security Class: Tier 4</div>
+            <div class="security-pill">Brand System Active</div>
             """,
             unsafe_allow_html=True,
         )
@@ -488,11 +609,11 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
             st.markdown(
                 f"""
                 <div class="sidebar-kpi">
-                    <span>Forecast Volume</span>
+                    <span>Projected Demand</span>
                     <strong>{int(future_df['forecast'].sum()):,} units</strong>
                 </div>
                 <div class="sidebar-kpi">
-                    <span>Action Queue</span>
+                    <span>Restock Watchlist</span>
                     <strong>{int(inventory_df['reorder_needed'].sum())} SKUs flagged</strong>
                 </div>
                 """,
@@ -501,8 +622,8 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
         st.markdown(
             """
             <div class="status-strip" style="margin-top:0.25rem; margin-bottom:0.85rem;">
-                <div class="status-item"><span class="status-dot"></span>System Health</div>
-                <div class="status-item">100% Operational</div>
+                <div class="status-item"><span class="status-dot"></span>Live Workspace</div>
+                <div class="status-item">Adaptive Layout</div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -516,33 +637,56 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
         _page_link("pages/6_Scenario_Simulator.py", PAGE_TITLES["scenario"], ":material/tune:", active_key == "scenario")
         st.divider()
         st.button("Run New Scenario", use_container_width=True)
-        st.caption("Authenticated session · Principal Architect")
+        st.caption(f"Theme: {st.session_state.get('theme_mode', 'dark').title()} · Responsive dashboard")
 
 
 def render_header(kicker: str, title: str, subtitle: str) -> None:
-    st.markdown(
-        f"""
-        <div class="page-shell">
-            <div class="page-header-grid">
-                <div>
-                    <div class="page-kicker">{kicker}</div>
-                    <div class="page-title">{title}</div>
-                    <div class="page-subtitle">{subtitle}</div>
-                    <div class="status-strip">
-                        <div class="status-item"><span class="status-dot"></span>Live Stream</div>
-                        <div class="status-item">Cluster RX-992</div>
-                        <div class="status-item">Latency 12ms</div>
-                    </div>
-                </div>
-                <div class="page-meta">
-                    <div class="page-meta-top">Systems Intelligence Status</div>
-                    <div class="page-meta-bottom">Authenticated // Live // Institutional Build</div>
+    left, right = st.columns([1.7, 0.9], gap="large")
+    with left:
+        st.markdown(
+            f"""
+            <div class="page-shell">
+                <div class="page-kicker">{kicker}</div>
+                <div class="page-title">{title}</div>
+                <div class="page-subtitle">{subtitle}</div>
+                <div class="hero-badges">
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Brand-led UI system</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Mobile to desktop ready</div>
+                    <div class="hero-badge"><span class="hero-badge-dot"></span>Real-time planning signals</div>
                 </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
+    with right:
+        theme_toggle = st.toggle(
+            "Light theme",
+            value=st.session_state.get("theme_mode", "dark") == "light",
+            key="theme_mode_toggle",
+            help="Switch between dark and light UI modes.",
+        )
+        desired_theme = "light" if theme_toggle else "dark"
+        if desired_theme != st.session_state.get("theme_mode"):
+            st.session_state["theme_mode"] = desired_theme
+            st.rerun()
+
+        st.markdown(
+            """
+            <div class="hero-side">
+                <div class="glass-card">
+                    <div class="glass-label">Interface Mode</div>
+                    <div class="glass-value">Precision Dashboard</div>
+                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Balanced for touch, laptop, and widescreen workflows</div>
+                </div>
+                <div class="glass-card">
+                    <div class="glass-label">Operational Status</div>
+                    <div class="glass-value">Live planning fabric</div>
+                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Forecast, inventory, and warehouse views aligned on one design language</div>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def metric_panel(label: str, value: str, detail: str) -> str:
@@ -551,14 +695,22 @@ def metric_panel(label: str, value: str, detail: str) -> str:
         f'<div class="metric-label">{label}</div>'
         f'<div class="metric-value">{value}</div>'
         f'<div class="metric-detail">{detail}</div>'
+        '<div class="metric-chip">DemandSense-RX</div>'
         "</div>"
     )
 
 
 def style_plotly(fig, height: int = 320):
-    fig.update_layout(height=height, margin=dict(l=10, r=10, t=30, b=10), **PLOTLY_THEME)
-    fig.update_xaxes(showgrid=True, gridcolor="rgba(63,84,128,0.15)", zeroline=False, linecolor="rgba(104,122,165,0.18)", tickfont={"color": "#8391b2"})
-    fig.update_yaxes(showgrid=True, gridcolor="rgba(63,84,128,0.15)", zeroline=False, linecolor="rgba(104,122,165,0.18)", tickfont={"color": "#8391b2"})
+    theme = _get_theme_palette()
+    plotly_theme = {
+        "paper_bgcolor": theme["plot_bg"],
+        "plot_bgcolor": theme["plot_bg"],
+        "font": {"family": "IBM Plex Sans, sans-serif", "color": theme["plot_text"]},
+        "legend": {"font": {"color": theme["muted"]}},
+    }
+    fig.update_layout(height=height, margin=dict(l=10, r=10, t=30, b=10), **plotly_theme)
+    fig.update_xaxes(showgrid=True, gridcolor=theme["plot_grid"], zeroline=False, linecolor=theme["plot_line"], tickfont={"color": theme["plot_tick"]})
+    fig.update_yaxes(showgrid=True, gridcolor=theme["plot_grid"], zeroline=False, linecolor=theme["plot_line"], tickfont={"color": theme["plot_tick"]})
     return fig
 
 
@@ -611,3 +763,90 @@ def _page_link(page: str, label: str, icon: str, disabled: bool) -> None:
         st.page_link(page, label=label, icon=icon, disabled=disabled)
     else:
         st.markdown(f"`{label}`")
+
+
+def _get_theme_palette() -> dict[str, str]:
+    mode = st.session_state.get("theme_mode", "dark")
+    if mode == "light":
+        return {
+            "bg": "#eef2f8",
+            "bg_soft": "#f7f9fc",
+            "surface": "#ffffff",
+            "surface_2": "#f4f6fb",
+            "surface_3": "#ebeff7",
+            "line": "rgba(103, 122, 158, 0.18)",
+            "line_strong": "rgba(103, 122, 158, 0.28)",
+            "text": "#111827",
+            "muted": "#66738f",
+            "muted_2": "#7c89a3",
+            "accent": "#5446f5",
+            "accent_2": "#8e85ff",
+            "accent_soft": "rgba(84, 70, 245, 0.10)",
+            "good": "#1fa971",
+            "warn": "#d68d28",
+            "bad": "#d7526f",
+            "shadow": "rgba(31, 42, 68, 0.08)",
+            "card_glow": "rgba(84, 70, 245, 0.10)",
+            "app_grad_a": "rgba(84, 70, 245, 0.08)",
+            "app_grad_b": "rgba(36, 197, 180, 0.06)",
+            "app_grad_c": "#f8faff",
+            "sidebar_grad_a": "#fcfdff",
+            "sidebar_grad_b": "#f2f5fb",
+            "hero_grad_a": "rgba(255,255,255,0.92)",
+            "hero_grad_b": "rgba(246,248,254,0.94)",
+            "hero_grad_c": "rgba(238,243,252,0.96)",
+            "panel_grad_a": "rgba(255,255,255,0.98)",
+            "panel_grad_b": "rgba(246,248,253,0.98)",
+            "metric_grad_a": "rgba(255,255,255,0.98)",
+            "metric_grad_b": "rgba(244,247,253,0.98)",
+            "input_bg": "#ffffff",
+            "table_head": "#f4f7fc",
+            "table_body": "#ffffff",
+            "table_hover": "#f6f8fd",
+            "plot_bg": "rgba(255,255,255,0)",
+            "plot_text": "#18212f",
+            "plot_grid": "rgba(115, 131, 163, 0.16)",
+            "plot_line": "rgba(115, 131, 163, 0.22)",
+            "plot_tick": "#66738f",
+        }
+    return {
+        "bg": "#07101d",
+        "bg_soft": "#0b1424",
+        "surface": "#0f1727",
+        "surface_2": "#111c30",
+        "surface_3": "#16233a",
+        "line": "rgba(108, 130, 170, 0.20)",
+        "line_strong": "rgba(134, 153, 189, 0.34)",
+        "text": "#eef2ff",
+        "muted": "#97a5c0",
+        "muted_2": "#75829f",
+        "accent": "#9084ff",
+        "accent_2": "#c4bdff",
+        "accent_soft": "rgba(144, 132, 255, 0.12)",
+        "good": "#89d7bc",
+        "warn": "#ffc57f",
+        "bad": "#ff8ea4",
+        "shadow": "rgba(0, 0, 0, 0.22)",
+        "card_glow": "rgba(144, 132, 255, 0.18)",
+        "app_grad_a": "rgba(144, 132, 255, 0.14)",
+        "app_grad_b": "rgba(70, 131, 255, 0.10)",
+        "app_grad_c": "#0a1220",
+        "sidebar_grad_a": "#09111d",
+        "sidebar_grad_b": "#0c1424",
+        "hero_grad_a": "rgba(29, 44, 74, 0.96)",
+        "hero_grad_b": "rgba(18, 28, 48, 0.96)",
+        "hero_grad_c": "rgba(11, 19, 33, 0.98)",
+        "panel_grad_a": "rgba(17, 27, 46, 0.96)",
+        "panel_grad_b": "rgba(11, 20, 35, 0.98)",
+        "metric_grad_a": "rgba(16, 27, 47, 0.96)",
+        "metric_grad_b": "rgba(11, 19, 33, 0.98)",
+        "input_bg": "#10192b",
+        "table_head": "#101a2d",
+        "table_body": "#0d1626",
+        "table_hover": "#121d31",
+        "plot_bg": "rgba(0,0,0,0)",
+        "plot_text": "#edf2ff",
+        "plot_grid": "rgba(103, 121, 160, 0.14)",
+        "plot_line": "rgba(103, 121, 160, 0.20)",
+        "plot_tick": "#8f9bb8",
+    }
