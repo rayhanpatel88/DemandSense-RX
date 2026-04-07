@@ -104,6 +104,10 @@ def _build_slotting_plan(future_df: pd.DataFrame, inventory_df: pd.DataFrame) ->
     risk = inventory_df.set_index("sku")[["stockout_risk", "days_to_stockout", "current_stock", "reorder_point"]]
     slotting = volume.to_frame().join(risk, how="left").sort_values("forecast_30d_total", ascending=False).reset_index()
     slotting["slot_rank"] = slotting.index + 1
+    n = len(slotting)
+    slotting["zone"] = "C"
+    slotting.loc[slotting["slot_rank"] <= max(1, n // 3), "zone"] = "A"
+    slotting.loc[(slotting["slot_rank"] > max(1, n // 3)) & (slotting["slot_rank"] <= max(2, 2 * n // 3)), "zone"] = "B"
     return slotting
 
 
