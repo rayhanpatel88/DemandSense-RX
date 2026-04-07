@@ -72,7 +72,7 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
     for feature in top_features:
         for idx in range(len(shap_df)):
             rows.append({"feature": feature, "shap_value": shap_df.iloc[idx][feature], "feature_value": sample_df.iloc[idx][feature]})
-    beeswarm = px.strip(rows, x="shap_value", y="feature", color="feature_value", color_continuous_scale=["#1f3a5f", "#d9c9ae", "#a64032"])
+    beeswarm = px.scatter(rows, x="shap_value", y="feature", color="feature_value", color_continuous_scale=["#1f3a5f", "#d9c9ae", "#a64032"])
     beeswarm = style_plotly(beeswarm, 360)
     beeswarm.add_vline(x=0, line_dash="dash", line_color="#6d685f")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
