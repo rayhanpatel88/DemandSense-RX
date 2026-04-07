@@ -118,7 +118,7 @@ with main_left:
             y=history.tail(180)["demand"],
             mode="lines",
             name="Historical",
-            line=dict(color="#a39afc", width=2.1),
+            line=dict(color="#818cf8", width=2.1),
         )
     )
     history_fig.add_trace(
@@ -127,9 +127,9 @@ with main_left:
             y=forecast["forecast"],
             mode="lines",
             name="Recursive forecast",
-            line=dict(color="#f1eefc", width=2.4),
+            line=dict(color="#c7d2fe", width=2.4),
             fill="tozeroy",
-            fillcolor="rgba(163,154,252,0.14)",
+            fillcolor="rgba(99,102,241,0.10)",
         )
     )
     history_fig = style_plotly(history_fig, 390)
@@ -154,7 +154,7 @@ with main_left:
         y="label",
         orientation="h",
         color="forecast",
-        color_continuous_scale=["#233152", "#9b92ff"],
+        color_continuous_scale=["#1e2d4e", "#6366f1"],
     )
     slot_fig = style_plotly(slot_fig, 340)
     slot_fig.update_layout(
@@ -176,7 +176,7 @@ with main_right:
         x="risk",
         y="count",
         color="risk",
-        color_discrete_map={"critical": "#ff8d9f", "high": "#ffc57f", "medium": "#9aa7c8", "low": "#87d2bc"},
+        color_discrete_map={"critical": "#f87171", "high": "#fb923c", "medium": "#94a3b8", "low": "#34d399"},
     )
     risk_fig = style_plotly(risk_fig, 280)
     risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="SKU count")
@@ -236,7 +236,7 @@ with ops_mid:
             marker=dict(
                 size=slotting["forecast_30d_total"] / slotting["forecast_30d_total"].max() * 24 + 8,
                 color=slotting["days_to_stockout"],
-                colorscale=[[0, "#ff8d9f"], [0.45, "#ffc57f"], [1, "#8f84ff"]],
+                colorscale=[[0, "#f87171"], [0.45, "#fb923c"], [1, "#6366f1"]],
                 line=dict(color="#0c1220", width=1.5),
                 showscale=False,
             ),

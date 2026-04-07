@@ -1,14 +1,20 @@
 <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect x="6" y="6" width="84" height="84" rx="18" fill="url(#panel)"/>
-  <path d="M28 67V29H45.5C58.2 29 66 36.1 66 48C66 60.8 57.5 67 44.8 67H28Z" fill="#07111F"/>
-  <path d="M44.2 40.4H36.9V55.7H44.2C49.9 55.7 53.5 52.8 53.5 48.1C53.5 43.3 49.9 40.4 44.2 40.4Z" fill="#CBD1FF"/>
-  <path d="M55.5 33L70.5 48L55.5 63" stroke="#07111F" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M53.4 33.5C60.4 36.7 65.2 41.8 67.7 49.2" stroke="#E8EBFF" stroke-width="2.4" stroke-linecap="round" opacity="0.88"/>
+  <rect width="96" height="96" rx="20" fill="url(#bg)"/>
+  <rect x="1" y="1" width="94" height="94" rx="19" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
+  <!-- Demand-signal pulse (ECG/Rx wave — demand sensing heartbeat) -->
+  <path d="M15 50 L27 50 L33 29 L41 69 L47 35 L53 59 L61 50 L81 50"
+        stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <!-- Peak node highlight -->
+  <circle cx="47" cy="35" r="5.2" fill="#c7d2fe"/>
+  <circle cx="47" cy="35" r="9.5" fill="#818cf8" fill-opacity="0.18"/>
+  <!-- Terminal endpoint nodes -->
+  <circle cx="15" cy="50" r="2.6" fill="white" fill-opacity="0.42"/>
+  <circle cx="81" cy="50" r="2.6" fill="white" fill-opacity="0.42"/>
   <defs>
-    <linearGradient id="panel" x1="18" y1="14" x2="78" y2="82" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#D9DCFF"/>
-      <stop offset="0.42" stop-color="#948AFF"/>
-      <stop offset="1" stop-color="#5042F1"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1e1b4b"/>
+      <stop offset="0.48" stop-color="#2d2a80"/>
+      <stop offset="1" stop-color="#4338ca"/>
     </linearGradient>
   </defs>
 </svg>
