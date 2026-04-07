@@ -184,7 +184,6 @@ def generate_synthetic_data(config: dict) -> pd.DataFrame:
                 "sku": sku,
                 "category": category,
                 "family": family,
-                "abc_class": abc_class,
                 "demand": realised_sales,
                 "unconstrained_demand": demand,
                 "lost_sales": lost_sales,
