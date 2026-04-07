@@ -43,7 +43,7 @@ with left:
     fig.update_layout(coloraxis_showscale=False, yaxis={"categoryorder": "total ascending"}, yaxis_title="", xaxis_title="Importance")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Model Gain Importance")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -61,7 +61,7 @@ with right:
         shap_fig.update_layout(coloraxis_showscale=False, yaxis={"categoryorder": "total ascending"}, yaxis_title="", xaxis_title="Mean |SHAP|")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("SHAP Global Impact")
-        st.plotly_chart(shap_fig, use_container_width=True)
+        st.plotly_chart(shap_fig, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
 if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
@@ -77,7 +77,7 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
     beeswarm.add_vline(x=0, line_dash="dash", line_color="#6d685f")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("SHAP Distribution")
-    st.plotly_chart(beeswarm, use_container_width=True)
+    st.plotly_chart(beeswarm, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     explainer = shap_data.get("explainer")
@@ -97,10 +97,10 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
         with info:
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             st.subheader("Single Prediction Decomposition")
-            st.plotly_chart(waterfall, use_container_width=True)
+            st.plotly_chart(waterfall, width="stretch")
             st.markdown("</div>", unsafe_allow_html=True)
         with panel:
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             st.subheader("Feature Context")
-            st.dataframe(local[["feature", "feature_value", "shap_value"]], use_container_width=True, hide_index=True)
+            st.dataframe(local[["feature", "feature_value", "shap_value"]], width="stretch", hide_index=True)
             st.markdown("</div>", unsafe_allow_html=True)

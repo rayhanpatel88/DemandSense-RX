@@ -636,7 +636,7 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
         _page_link("pages/5_Backtesting.py", PAGE_TITLES["backtesting"], ":material/history:", active_key == "backtesting")
         _page_link("pages/6_Scenario_Simulator.py", PAGE_TITLES["scenario"], ":material/tune:", active_key == "scenario")
         st.divider()
-        st.button("Run New Scenario", use_container_width=True)
+        st.button("Run New Scenario", width="stretch")
         st.caption(f"Theme: {st.session_state.get('theme_mode', 'dark').title()} · Responsive dashboard")
 
 
@@ -733,7 +733,7 @@ def status_rail(items: list[tuple[str, str]]) -> str:
 
 
 def dense_dataframe(df, height: int = 320):
-    st.dataframe(df, use_container_width=True, hide_index=True, height=height)
+    st.dataframe(df, width="stretch", hide_index=True, height=height)
 
 
 def _logo_data_uri() -> str:

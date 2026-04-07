@@ -136,7 +136,7 @@ with left:
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(compare, use_container_width=True)
+    st.plotly_chart(compare, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -174,7 +174,7 @@ with right:
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(line, use_container_width=True)
+    st.plotly_chart(line, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     risk_mix = inventory_df["stockout_risk"].value_counts().rename_axis("risk").reset_index(name="count")
@@ -189,5 +189,5 @@ with right:
     risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="SKU count")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Risk Mix")
-    st.plotly_chart(risk_fig, use_container_width=True)
+    st.plotly_chart(risk_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)

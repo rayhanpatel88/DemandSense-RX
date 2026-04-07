@@ -44,7 +44,7 @@ left, right = st.columns([1.0, 1.4], gap="large")
 with left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Model Summary")
-    st.dataframe(summary.reset_index(), use_container_width=True, hide_index=True)
+    st.dataframe(summary.reset_index(), width="stretch", hide_index=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -53,7 +53,7 @@ with right:
     comp.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Metric value")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Cross-Model Comparison")
-    st.plotly_chart(comp, use_container_width=True)
+    st.plotly_chart(comp, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 if not predictions.empty:
@@ -65,7 +65,7 @@ if not predictions.empty:
     line.update_layout(legend=dict(orientation="h", y=1.08, x=0), yaxis_title="Mean absolute error", xaxis_title="")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Error Through Time")
-    st.plotly_chart(line, use_container_width=True)
+    st.plotly_chart(line, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     lgbm = preds[preds["model"] == "LightGBM"].copy()
@@ -78,12 +78,12 @@ if not predictions.empty:
         scatter.update_layout(showlegend=False, xaxis_title="Actual demand", yaxis_title="Predicted demand")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("LightGBM Calibration")
-        st.plotly_chart(scatter, use_container_width=True)
+        st.plotly_chart(scatter, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
 if not by_sku.empty:
     focus = by_sku.pivot(index="sku", columns="model", values=metric).reset_index()
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader(f"Per-SKU {metric}")
-    st.dataframe(focus.sort_values(by=focus.columns[1], ascending=False), use_container_width=True, hide_index=True, height=360)
+    st.dataframe(focus.sort_values(by=focus.columns[1], ascending=False), width="stretch", hide_index=True, height=360)
     st.markdown("</div>", unsafe_allow_html=True)

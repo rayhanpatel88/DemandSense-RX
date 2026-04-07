@@ -31,7 +31,7 @@ with st.sidebar:
     n_robots = st.slider("Robots", 1, 8, data["config"]["simulation"]["n_robots"])
     steps = st.slider("Simulation steps", 60, 240, data["config"]["simulation"]["time_steps"], step=20)
     load_factor = st.slider("Load factor", 0.2, 1.8, 1.0, step=0.1)
-    rerun = st.button("Run simulation", use_container_width=True, type="primary")
+    rerun = st.button("Run simulation", width="stretch", type="primary")
 
 
 @st.cache_data(show_spinner="Simulating warehouse execution...")
@@ -158,7 +158,7 @@ with left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Warehouse Grid")
     st.caption("Zone congestion now emerges from demand-weighted pick generation and shared aisle access.")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     if not tasks.empty:
@@ -168,7 +168,7 @@ with left:
         zone_fig.update_layout(showlegend=False, xaxis_title="Zone", yaxis_title="Task count")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Zone Throughput")
-        st.plotly_chart(zone_fig, use_container_width=True)
+        st.plotly_chart(zone_fig, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -177,7 +177,7 @@ with right:
     heatmap = style_plotly(heatmap, 280)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Congestion Index")
-    st.plotly_chart(heatmap, use_container_width=True)
+    st.plotly_chart(heatmap, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
@@ -211,7 +211,7 @@ with bottom_left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Robot State Snapshot")
     if history:
-        st.dataframe(pd.DataFrame(history[step]), use_container_width=True, hide_index=True, height=310)
+        st.dataframe(pd.DataFrame(history[step]), width="stretch", hide_index=True, height=310)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with bottom_right:
@@ -229,5 +229,5 @@ with bottom_right:
         queue_fig.update_layout(xaxis_title="Queue delay", yaxis_title="Total fulfilment time")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Queue vs Fulfilment Time")
-        st.plotly_chart(queue_fig, use_container_width=True)
+        st.plotly_chart(queue_fig, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)

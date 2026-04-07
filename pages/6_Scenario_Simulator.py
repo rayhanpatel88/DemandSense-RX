@@ -94,7 +94,7 @@ with outputs:
     lines.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Units")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Demand Delta")
-    st.plotly_chart(lines, use_container_width=True)
+    st.plotly_chart(lines, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     compare = scenario_inventory[["sku", "days_to_stockout"]].merge(base_inventory[["sku", "days_to_stockout"]], on="sku", suffixes=("_scenario", "_baseline"))
@@ -104,5 +104,5 @@ with outputs:
     bars.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Days to stockout")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Inventory Impact")
-    st.plotly_chart(bars, use_container_width=True)
+    st.plotly_chart(bars, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)

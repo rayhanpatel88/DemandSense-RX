@@ -142,7 +142,7 @@ with main_left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Demand Flow")
     st.caption("Historical volume transitions directly into the recursive forecast path, giving planners one continuous view of movement.")
-    st.plotly_chart(history_fig, use_container_width=True)
+    st.plotly_chart(history_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     zone_pressure = future_7d.groupby("sku")["forecast"].sum().sort_values(ascending=False).head(12).reset_index()
@@ -166,7 +166,7 @@ with main_left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Near-Term Pressure Map")
     st.caption("These products are driving the next wave of slotting and pick pressure across the network.")
-    st.plotly_chart(slot_fig, use_container_width=True)
+    st.plotly_chart(slot_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_right:
@@ -182,7 +182,7 @@ with main_right:
     risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="SKU count")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Risk Mix")
-    st.plotly_chart(risk_fig, use_container_width=True)
+    st.plotly_chart(risk_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     weakest = reliability_df.sort_values("reliability_score").head(4) if not reliability_df.empty else None
@@ -216,7 +216,7 @@ with ops_left:
     st.caption("Fastest path to stabilizing service level across the most constrained inventory positions.")
     st.dataframe(
         top_inventory[["sku", "current_stock", "reorder_point", "reorder_qty", "stockout_risk"]],
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=330,
     )
@@ -247,7 +247,7 @@ with ops_mid:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Volume vs Cover")
     st.caption("The fault line is where high demand meets thin inventory cover.")
-    st.plotly_chart(status_fig, use_container_width=True)
+    st.plotly_chart(status_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
 with ops_right:

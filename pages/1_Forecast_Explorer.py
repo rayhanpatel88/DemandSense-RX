@@ -162,7 +162,7 @@ with left:
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(chart, use_container_width=True)
+    st.plotly_chart(chart, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     table = sku_future[["date", "forecast", "lower", "upper", "promotion", "price"]].copy()
@@ -209,7 +209,7 @@ with right:
         error_chart.update_layout(showlegend=False, yaxis_title="Units", xaxis_title="")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Recent Holdout Error")
-        st.plotly_chart(error_chart, use_container_width=True)
+        st.plotly_chart(error_chart, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
     assumptions = sku_future[["promotion", "price"]].copy()
@@ -226,5 +226,5 @@ with right:
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Forward Assumptions")
-    st.plotly_chart(assumption_chart, use_container_width=True)
+    st.plotly_chart(assumption_chart, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
