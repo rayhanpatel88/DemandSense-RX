@@ -121,6 +121,20 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+st.markdown(
+    f"""
+    <div class="panel">
+        <div class="page-kicker" style="margin-bottom:0.45rem;">How Shortages Are Identified</div>
+        <div class="note" style="color:var(--text);">
+            A product is flagged when <strong>current stock is not enough to cover expected demand during supplier lead time plus safety buffer</strong>.<br>
+            We base that on four things for each product: <strong>current stock on hand</strong>, <strong>forecast demand</strong>, <strong>lead time in days</strong>, and the <strong>target service level</strong>.<br>
+            If stock falls below the reorder point, it enters the reorder queue. If projected stock hits zero before replenishment arrives, it moves into a higher shortage-risk band.
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 main_left, main_right = st.columns([1.65, 1.0], gap="large")
 
 with main_left:
@@ -150,7 +164,6 @@ with main_left:
     )
     demand_fig = style_plotly(demand_fig, 390)
     demand_fig.update_layout(
-        legend=dict(orientation="h", y=1.08, x=0),
         xaxis_title="",
         yaxis_title="Units",
         hovermode="x unified",
@@ -169,15 +182,15 @@ with main_left:
         y="sku",
         orientation="h",
         text_auto=".0f",
-        color="forecast",
-        color_continuous_scale=["#c7d2fe", "#4f46e5"],
+        color_discrete_sequence=["#4f46e5"],
     )
     pressure_fig = style_plotly(pressure_fig, 355)
     pressure_fig.update_layout(
-        coloraxis_showscale=False,
+        showlegend=False,
         xaxis_title="Expected units over the next 7 days",
         yaxis_title="",
     )
+    pressure_fig.update_traces(textposition="outside", marker_line_color="rgba(255,255,255,0.45)", marker_line_width=1.1)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Top Products Driving Demand This Week")
     st.caption("These products are expected to account for the most near-term sales, so they deserve the closest stock monitoring.")
@@ -200,6 +213,7 @@ with main_right:
     )
     risk_fig = style_plotly(risk_fig, 300)
     risk_fig.update_layout(showlegend=False, xaxis_title="Number of products", yaxis_title="")
+    risk_fig.update_traces(textposition="outside")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("How Much Stock Risk We Have")
     st.caption("This shows how many products fall into each risk level, from critical down to low.")
@@ -278,9 +292,11 @@ with ops_mid:
     )
     cover_fig = style_plotly(cover_fig, 330)
     cover_fig.update_layout(xaxis_title="Expected demand over the next 30 days", yaxis_title="Days until stockout")
+    cover_fig.add_hline(y=14, line_color="#f97316", line_dash="dot", opacity=0.8)
+    cover_fig.add_vline(x=cover_df["forecast_30d_total"].median(), line_color="#64748b", line_dash="dot", opacity=0.45)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("High Demand Products With Thin Stock Cover")
-    st.caption("Products near the bottom-right are the most exposed: strong expected demand and not much time before stock runs out.")
+    st.caption("Products near the bottom-right are the most exposed: strong expected demand and not much time before stock runs out. The orange guide marks roughly two weeks of cover.")
     st.plotly_chart(cover_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 

@@ -49,15 +49,15 @@ reliability_df = data["reliability_df"]
 
 with st.sidebar:
     st.divider()
-    selected_sku = st.selectbox("SKU", sorted(raw_df["sku"].unique()))
-    horizon = segmented_control("Horizon", options=[7, 30], default=30)
-    history_days = st.slider("History window", 90, 365, 180, step=15)
-    show_bands = st.toggle("Show prediction bands", value=True)
+    selected_sku = st.selectbox("Product", sorted(raw_df["sku"].unique()))
+    horizon = segmented_control("Planning window", options=[7, 30], default=30)
+    history_days = st.slider("History shown", 90, 365, 180, step=15)
+    show_bands = st.toggle("Show forecast range", value=True)
 
 render_header(
     "Recursive Forecasting",
     f"Forecast Explorer · {selected_sku}",
-    "A SKU-level forecasting workbench with recursive horizon logic, confidence diagnostics, and operational context for price and promotion assumptions.",
+    "This page shows how the forecast for one product is built, how reliable it is, and which assumptions are influencing it.",
 )
 
 sku_hist = raw_df[raw_df["sku"] == selected_sku].sort_values("date").tail(history_days)
@@ -69,7 +69,7 @@ reliability_row = reliability.iloc[0] if not reliability.empty else None
 st.markdown(
     f"""
     <div class="panel panel-hero" style="margin-bottom:1.35rem;">
-        <div class="page-kicker" style="margin-bottom:0.35rem;">Forecast Intelligence Brief</div>
+        <div class="page-kicker" style="margin-bottom:0.35rem;">Forecast Summary</div>
         <div style="display:flex; justify-content:space-between; gap:1.5rem; align-items:end;">
             <div>
                 <div style="font-family:'Space Grotesk',sans-serif; font-size:1.95rem; font-weight:700; color:#f4f6ff; line-height:1.06;">
@@ -80,8 +80,8 @@ st.markdown(
                 </div>
             </div>
             <div style="min-width:250px;">
-                <div class="security-pill">{reliability_row['reliability_category'] if reliability_row is not None else 'No'} reliability</div>
-                <div class="page-meta-bottom" style="margin-top:0.65rem;">Promo days {int(sku_future['promotion'].sum())} // Avg price {sku_future['price'].mean():.2f}</div>
+                <div class="security-pill">{reliability_row['reliability_category'] if reliability_row is not None else 'No'} forecast confidence</div>
+                <div class="page-meta-bottom" style="margin-top:0.65rem;">Promotion days {int(sku_future['promotion'].sum())} // Average price {sku_future['price'].mean():.2f}</div>
             </div>
         </div>
     </div>
@@ -92,10 +92,10 @@ st.markdown(
 for col, html in zip(
     st.columns(4),
     [
-        metric_panel("Observed Mean", f"{sku_hist['demand'].mean():.1f}", "Average daily realized demand"),
-        metric_panel(f"{horizon}-Day Forecast", f"{sku_future['forecast'].sum():,.0f}", "Recursive horizon aggregate"),
-        metric_panel("Reliability", f"{reliability_row['reliability_score']:.0%}" if reliability_row is not None else "N/A", reliability_row["reliability_category"] if reliability_row is not None else "No score"),
-        metric_panel("Price Assumption", f"{sku_future['price'].mean():.2f}", "Mean forward selling price"),
+        metric_panel("Average Recent Daily Sales", f"{sku_hist['demand'].mean():.1f}", "Average units sold per day in recent history"),
+        metric_panel(f"Expected Sales, Next {horizon} Days", f"{sku_future['forecast'].sum():,.0f}", "Total forecast for the selected planning window"),
+        metric_panel("Forecast Confidence", f"{reliability_row['reliability_score']:.0%}" if reliability_row is not None else "N/A", reliability_row["reliability_category"] if reliability_row is not None else "No score"),
+        metric_panel("Average Planned Price", f"{sku_future['price'].mean():.2f}", "Average selling price assumed in the forecast"),
     ],
 ):
     with col:
@@ -145,12 +145,12 @@ if show_bands and not sku_future.empty:
     )
 chart.add_vline(x=data["train_cutoff"], line_color="#ffc57f", line_dash="dash")
 chart = style_plotly(chart, 470)
-chart.update_layout(showlegend=False, yaxis_title="Units", xaxis_title="")
+chart.update_layout(showlegend=False, yaxis_title="Units sold", xaxis_title="")
 
 left, right = st.columns([1.65, 0.95], gap="large")
 with left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Demand and Forecast Path")
+    st.subheader("Recent Sales And Expected Sales")
     st.markdown(
         compact_legend(
             [
@@ -171,15 +171,25 @@ with left:
     table["lower"] = table["lower"].round(1)
     table["upper"] = table["upper"].round(1)
     table["price"] = table["price"].round(2)
+    table = table.rename(
+        columns={
+            "date": "Date",
+            "forecast": "Expected Sales",
+            "lower": "Low Case",
+            "upper": "High Case",
+            "promotion": "Promotion Running",
+            "price": "Planned Price",
+        }
+    )
     st.markdown('<div class="panel panel-tight">', unsafe_allow_html=True)
-    st.subheader("Forward Schedule")
-    st.markdown("<div class='table-note'>Dense planning ledger for the active forecast horizon</div>", unsafe_allow_html=True)
+    st.subheader("Day-By-Day Forecast")
+    st.markdown("<div class='table-note'>Daily forecast, expected range, promotion days, and planned price</div>", unsafe_allow_html=True)
     dense_dataframe(table, height=330)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Reliability Reading")
+    st.subheader("How Much To Trust This Forecast")
     if reliability_row is None:
         st.markdown("<div class='note'>No reliability summary was generated for this SKU.</div>", unsafe_allow_html=True)
     else:
@@ -190,10 +200,10 @@ with right:
         st.markdown(
             status_rail(
                 [
-                    ("Historical WAPE", f"{reliability_row['historical_wape']:.1%}"),
-                    ("Coverage", f"{reliability_row['coverage']:.1%}"),
-                    ("Width Ratio", f"{reliability_row['interval_width_ratio']:.1%}"),
-                    ("Stability", f"{1 - reliability_row['recent_stability']:.1%}"),
+                    ("Average forecast miss", f"{reliability_row['historical_wape']:.1%}"),
+                    ("Forecast range coverage", f"{reliability_row['coverage']:.1%}"),
+                    ("Forecast range width", f"{reliability_row['interval_width_ratio']:.1%}"),
+                    ("Recent consistency", f"{1 - reliability_row['recent_stability']:.1%}"),
                 ]
             ),
             unsafe_allow_html=True,
@@ -206,9 +216,9 @@ with right:
         error_chart = go.Figure()
         error_chart.add_trace(go.Bar(x=recent["date"], y=recent["abs_error"], marker_color="#ff8d9f", name="Absolute error"))
         error_chart = style_plotly(error_chart, 285)
-        error_chart.update_layout(showlegend=False, yaxis_title="Units", xaxis_title="")
+        error_chart.update_layout(showlegend=False, yaxis_title="Units missed", xaxis_title="")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.subheader("Recent Holdout Error")
+        st.subheader("Recent Forecast Misses")
         st.plotly_chart(error_chart, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -220,11 +230,11 @@ with right:
     assumption_chart = style_plotly(assumption_chart, 285)
     assumption_chart.update_layout(
         showlegend=False,
-        xaxis_title="Forecast step",
+        xaxis_title="Day in forecast",
         yaxis_title="Price",
-        yaxis2=dict(overlaying="y", side="right", range=[0, 1.2], showgrid=False, title="Promo"),
+        yaxis2=dict(overlaying="y", side="right", range=[0, 1.2], showgrid=False, title="Promotion"),
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Forward Assumptions")
+    st.subheader("Price And Promotion Assumptions")
     st.plotly_chart(assumption_chart, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)

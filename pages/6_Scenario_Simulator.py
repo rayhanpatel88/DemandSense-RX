@@ -199,9 +199,7 @@ scenario_future, scenario_inventory, sim_metrics = simulate(
 render_header(
     "Scenario Planning",
     "Scenario Simulator",
-    "Select a named real-world scenario or dial the parameters manually. "
-    "Every change runs the full forecast–inventory–warehouse stack so you see "
-    "the true operational impact.",
+    "Change demand, lead time, service level, or robot capacity to see how the business plan would shift under a different scenario.",
 )
 
 # ---------------------------------------------------------------------------
@@ -214,22 +212,22 @@ for col, html in zip(
     st.columns(4),
     [
         metric_panel(
-            "Scenario Demand",
+            "Expected Sales In This Scenario",
             f"{scenario_future['forecast'].sum():,.0f}",
             f"{demand_delta:+,.0f} units vs baseline",
         ),
         metric_panel(
-            "Reorder SKUs",
+            "Products To Reorder",
             f"{int(scenario_inventory['reorder_needed'].sum())}",
             f"{reorder_delta:+d} vs baseline",
         ),
         metric_panel(
-            "Execution Rate",
+            "Warehouse Completion Rate",
             f"{sim_metrics['fulfilment_rate']:.1f}%",
             "Warehouse order completion rate",
         ),
         metric_panel(
-            "Shortage Friction",
+            "Delays From Shortages",
             f"{sim_metrics['inventory_linked_delays']}",
             "Picks delayed by stock shortage",
         ),
@@ -245,7 +243,7 @@ controls, outputs = st.columns([0.9, 1.5], gap="large")
 
 with controls:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader(f"Readout — {selected_preset}")
+    st.subheader(f"Scenario Summary: {selected_preset}")
     st.markdown(
         f"<div class='note'>{preset['description']}</div>",
         unsafe_allow_html=True,
@@ -253,7 +251,7 @@ with controls:
     st.markdown(
         f"<div class='note' style='margin-top:0.6rem;'>"
         f"Demand <strong>{demand_lift:.2f}×</strong> · "
-        f"Promo <strong>{promo_intensity:.2f}×</strong> · "
+        f"Promotion lift <strong>{promo_intensity:.2f}×</strong> · "
         f"Lead time <strong>{lead_time}d</strong> · "
         f"Service target <strong>{service_level:.1%}</strong> · "
         f"<strong>{robots}</strong> robots"
@@ -266,9 +264,9 @@ with controls:
     for pname, pvals in PRESETS.items():
         all_presets_summary.append({
             "Scenario": pname,
-            "Demand ×": f"{pvals['demand_lift']:.2f}",
-            "Lead (d)": pvals["lead_time"],
-            "SL": f"{pvals['service_level']:.0%}",
+            "Demand Change": f"{pvals['demand_lift']:.2f}x",
+            "Lead Time (Days)": pvals["lead_time"],
+            "Service Target": f"{pvals['service_level']:.0%}",
             "Robots": pvals["robots"],
         })
     import pandas as _pd
@@ -287,7 +285,7 @@ with controls:
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Priority Actions")
+    st.subheader("Recommended Actions")
     focus = scenario_inventory.sort_values(
         ["reorder_needed", "days_to_stockout"], ascending=[False, True]
     ).head(6)
@@ -309,13 +307,18 @@ with outputs:
         color_discrete_map={"Baseline": "#4b5563", selected_preset: "#6366f1"},
     )
     lines = style_plotly(lines, 320)
+    lines.for_each_trace(
+        lambda trace: trace.update(
+            line=dict(width=3.0 if trace.name == selected_preset else 1.8, dash="solid" if trace.name == selected_preset else "dot"),
+            opacity=1.0 if trace.name == selected_preset else 0.65,
+        )
+    )
     lines.update_layout(
-        legend=dict(orientation="h", y=1.08, x=0),
-        xaxis_title="", yaxis_title="Units",
+        xaxis_title="", yaxis_title="Expected units sold",
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Demand Delta")
-    st.caption("Scenario forecast vs baseline across the 30-day planning horizon.")
+    st.subheader("Expected Sales: Scenario vs Current Plan")
+    st.caption("This compares expected sales in the scenario against the current plan over the next 30 days.")
     st.plotly_chart(lines, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -333,27 +336,33 @@ with outputs:
             "days_to_stockout_baseline": "#94a3b8",
         },
     )
+    bars.for_each_trace(
+        lambda trace: trace.update(
+            name="Scenario plan" if trace.name == "days_to_stockout_scenario" else "Current plan",
+            opacity=1.0 if trace.name == "days_to_stockout_scenario" else 0.55,
+        )
+    )
     bars = style_plotly(bars, 300)
     bars.update_layout(
         legend=dict(orientation="h", y=1.08, x=0),
-        xaxis_title="", yaxis_title="Days to stockout",
+        xaxis_title="", yaxis_title="Days until stockout",
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Inventory Cover Impact")
-    st.caption("How many cover days each SKU loses or gains under this scenario vs baseline.")
+    st.subheader("How Stock Cover Changes")
+    st.caption("This shows which products would run out sooner or later under the scenario compared with today’s plan.")
     st.plotly_chart(bars, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Fulfilment rate vs robots sensitivity (static insight)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Warehouse Execution Summary")
+    st.subheader("Warehouse Impact Summary")
     exec_items = [
-        ("Fulfilment rate", f"{sim_metrics['fulfilment_rate']:.1f}%"),
-        ("Shortage-linked delays", f"{sim_metrics['inventory_linked_delays']}"),
+        ("Warehouse completion rate", f"{sim_metrics['fulfilment_rate']:.1f}%"),
+        ("Delays caused by shortages", f"{sim_metrics['inventory_linked_delays']}"),
         ("Active robots", f"{robots}"),
-        ("Lead time applied", f"{lead_time}d"),
-        ("Service-level target", f"{service_level:.1%}"),
-        ("Demand multiplier", f"{demand_lift:.2f}×"),
+        ("Lead time used", f"{lead_time}d"),
+        ("Service target", f"{service_level:.1%}"),
+        ("Demand change", f"{demand_lift:.2f}×"),
     ]
     st.markdown(
         "".join([

@@ -637,6 +637,11 @@ def apply_page_config(page_title: str) -> None:
             align-items: flex-start !important;
             gap: 1.35rem !important;
         }
+        div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stMarkdownContainer"]),
+        div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stPlotlyChart"]),
+        div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stDataFrame"]) {
+            margin-bottom: 0.35rem;
+        }
         div[data-testid="stPlotlyChart"] {
             margin-top: 0.55rem;
             margin-bottom: 0.2rem;
@@ -775,7 +780,17 @@ def style_plotly(fig, height: int = 320):
         "paper_bgcolor": theme["plot_bg"],
         "plot_bgcolor": theme["plot_bg"],
         "font": {"family": "IBM Plex Sans, sans-serif", "color": theme["plot_text"]},
-        "legend": {"font": {"color": theme["muted"]}},
+        "legend": {
+            "font": {"color": theme["muted"], "size": 11},
+            "bgcolor": "rgba(255,255,255,0.03)",
+            "bordercolor": theme["plot_grid"],
+            "borderwidth": 1,
+            "orientation": "h",
+            "x": 0,
+            "y": 1.08,
+            "itemclick": False,
+            "itemdoubleclick": False,
+        },
     }
     fig.update_layout(height=height, margin=dict(l=10, r=10, t=30, b=10), **plotly_theme)
     fig.update_xaxes(showgrid=True, gridcolor=theme["plot_grid"], zeroline=False, linecolor=theme["plot_line"], tickfont={"color": theme["plot_tick"]})

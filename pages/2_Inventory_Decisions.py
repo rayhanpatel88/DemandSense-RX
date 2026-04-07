@@ -47,13 +47,13 @@ timeline_df = data["stockout_timeline"]
 with st.sidebar:
     st.divider()
     risk_filter = st.multiselect("Risk levels", ["critical", "high", "medium", "low"], default=["critical", "high", "medium", "low"])
-    reorder_only = st.toggle("Only reorder candidates", value=False)
-    selected_sku = st.selectbox("Explanation focus", inventory_df["sku"].tolist())
+    reorder_only = st.toggle("Show only products that need reordering", value=False)
+    selected_sku = st.selectbox("Product to explain", inventory_df["sku"].tolist())
 
 render_header(
     "Inventory Policy",
     "Inventory Intelligence",
-    "A replenishment decision surface built on service-level targets, demand variance, lead-time exposure, and forecast-linked stock trajectories.",
+    "This page shows which products need reordering, why they were flagged, and how current stock compares with expected demand.",
 )
 
 filtered = inventory_df[inventory_df["stockout_risk"].isin(risk_filter)].copy()
@@ -65,20 +65,34 @@ focus = inventory_df[inventory_df["sku"] == selected_sku].iloc[0]
 st.markdown(
     f"""
     <div class="panel panel-hero" style="margin-bottom:1.35rem;">
-        <div class="page-kicker" style="margin-bottom:0.35rem;">Strategic Stock Advisory</div>
+        <div class="page-kicker" style="margin-bottom:0.35rem;">Stock Summary</div>
         <div style="display:flex; justify-content:space-between; gap:1.5rem; align-items:end;">
             <div>
                 <div style="font-family:'Space Grotesk',sans-serif; font-size:1.95rem; font-weight:700; color:#f4f6ff; line-height:1.06;">
-                    {int(inventory_df['reorder_needed'].sum())} SKUs require action and {int((inventory_df['stockout_risk'] == 'critical').sum())} are already in critical exposure.
+                    {int(inventory_df['reorder_needed'].sum())} products need reordering and {int((inventory_df['stockout_risk'] == 'critical').sum())} are already in the highest risk band.
                 </div>
                 <div class="page-subtitle" style="margin-top:0.65rem; margin-bottom:0;">
-                    {focus['sku']} is the current focus node. It carries {focus['coverage_days']:.1f} days of cover against a reorder point of {focus['reorder_point']:.0f} units and target stock of {focus['target_stock']:.0f}.
+                    {focus['sku']} is the selected example. It has {focus['coverage_days']:.1f} days of stock cover left, versus a reorder point of {focus['reorder_point']:.0f} units and a target stock level of {focus['target_stock']:.0f}.
                 </div>
             </div>
             <div style="min-width:250px;">
                 <div class="security-pill">{focus['stockout_risk'].upper()} risk</div>
-                <div class="page-meta-bottom" style="margin-top:0.65rem;">Lead time {int(focus['lead_time_days'])}D // Service {focus['service_level']:.1%}</div>
+                <div class="page-meta-bottom" style="margin-top:0.65rem;">Lead time {int(focus['lead_time_days'])}D // Service target {focus['service_level']:.1%}</div>
             </div>
+        </div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown(
+    f"""
+    <div class="panel">
+        <div class="page-kicker" style="margin-bottom:0.45rem;">How We Flag A Shortage</div>
+        <div class="note" style="color:var(--text);">
+            Shortage risk is based on <strong>current stock</strong>, <strong>forecast demand</strong>, <strong>lead time</strong>, and the <strong>service level target</strong>.<br>
+            For <strong>{focus['sku']}</strong>, the app compares current stock of <strong>{focus['current_stock']:.0f}</strong> units against expected demand while waiting <strong>{int(focus['lead_time_days'])}</strong> days for replenishment.<br>
+            The reorder point is <strong>{focus['reorder_point']:.0f}</strong> units. The suggested order quantity is <strong>{focus['reorder_qty']:.0f}</strong> units. The current shortage estimate is <strong>{focus['shortage_units']:.0f}</strong> units.
         </div>
     </div>
     """,
@@ -88,10 +102,10 @@ st.markdown(
 for col, html in zip(
     st.columns(4),
     [
-        metric_panel("Reorder Candidates", f"{int(inventory_df['reorder_needed'].sum())}", "SKUs below reorder point"),
-        metric_panel("Critical Exposure", f"{int((inventory_df['stockout_risk'] == 'critical').sum())}", "Immediate service risk"),
-        metric_panel("Median Cover", f"{inventory_df['coverage_days'].median():.1f} days", "Current stock protection"),
-        metric_panel("Mean Safety Stock", f"{inventory_df['safety_stock'].mean():.0f}", "Units held as variability buffer"),
+        metric_panel("Products To Reorder", f"{int(inventory_df['reorder_needed'].sum())}", "Products already below their reorder level"),
+        metric_panel("Products In Immediate Danger", f"{int((inventory_df['stockout_risk'] == 'critical').sum())}", "Items most likely to stock out first"),
+        metric_panel("Typical Stock Cover", f"{inventory_df['coverage_days'].median():.1f} days", "Typical number of days current stock will last"),
+        metric_panel("Average Safety Buffer", f"{inventory_df['safety_stock'].mean():.0f}", "Extra units held to protect service levels"),
     ],
 ):
     with col:
@@ -111,27 +125,41 @@ with left:
             "stockout_risk",
         ]
     ].copy()
+    display = display.rename(
+        columns={
+            "sku": "Product",
+            "current_stock": "Current Stock",
+            "reorder_point": "Reorder Level",
+            "target_stock": "Target Stock",
+            "reorder_qty": "Suggested Order",
+            "coverage_days": "Days Of Stock Cover",
+            "days_to_stockout": "Days Until Stockout",
+            "stockout_risk": "Risk Level",
+        }
+    )
+    display["Risk Level"] = display["Risk Level"].str.title()
     st.markdown('<div class="panel panel-tight">', unsafe_allow_html=True)
-    st.subheader("Decision Ledger")
-    st.markdown("<div class='table-note'>Filtered reorder queue with operating policy targets</div>", unsafe_allow_html=True)
+    st.subheader("Products Flagged For Review")
+    st.markdown("<div class='table-note'>This table compares stock on hand with reorder level, target stock, and expected time to stockout</div>", unsafe_allow_html=True)
     dense_dataframe(display, height=420)
     st.markdown("</div>", unsafe_allow_html=True)
 
     risky = inventory_df.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(10)
     compare = go.Figure()
     compare.add_trace(go.Bar(x=risky["sku"], y=risky["current_stock"], name="Current stock", marker_color="#8bd7bd"))
-    compare.add_trace(go.Bar(x=risky["sku"], y=risky["reorder_point"], name="Reorder point", marker_color="#ffc57f"))
-    compare.add_trace(go.Bar(x=risky["sku"], y=risky["target_stock"], name="Target stock", marker_color="#a39afc"))
+    compare.add_trace(go.Bar(x=risky["sku"], y=risky["reorder_point"], name="Reorder point", marker_color="#f97316"))
+    compare.add_trace(go.Bar(x=risky["sku"], y=risky["target_stock"], name="Target stock", marker_color="#94a3b8"))
     compare = style_plotly(compare, 350)
-    compare.update_layout(showlegend=False, barmode="group", xaxis_title="", yaxis_title="Units")
+    compare.update_layout(showlegend=False, barmode="group", xaxis_title="", yaxis_title="Units in stock")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Policy Comparison")
+    st.subheader("Current Stock vs Reorder Level")
+    st.caption("If the green bar is below the reorder point, the product is already in the reorder queue.")
     st.markdown(
         compact_legend(
             [
                 ("Current stock", "#8bd7bd"),
-                ("Reorder point", "#ffc57f"),
-                ("Target stock", "#a39afc"),
+                ("Reorder point", "#f97316"),
+                ("Target stock", "#94a3b8"),
             ]
         ),
         unsafe_allow_html=True,
@@ -141,15 +169,15 @@ with left:
 
 with right:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Recommendation Narrative")
+    st.subheader("Why The Selected Product Was Flagged")
     st.markdown(f"<div class='note' style='margin-bottom:0.9rem;'><span class='tag'>{focus['sku']}</span>{focus['explanation']}</div>", unsafe_allow_html=True)
     st.markdown(
         status_rail(
             [
-                ("Lead Time", f"{int(focus['lead_time_days'])} days"),
-                ("Service Level", f"{focus['service_level']:.1%}"),
-                ("7-Day Forecast", f"{focus['forecast_7d_total']:.0f}"),
-                ("Shortage Units", f"{focus['shortage_units']:.0f}"),
+                ("Supplier lead time", f"{int(focus['lead_time_days'])} days"),
+                ("Service target", f"{focus['service_level']:.1%}"),
+                ("Expected sales, next 7 days", f"{focus['forecast_7d_total']:.0f}"),
+                ("Estimated shortage", f"{focus['shortage_units']:.0f}"),
             ]
         ),
         unsafe_allow_html=True,
@@ -165,9 +193,11 @@ with right:
         color_discrete_sequence=["#a39afc", "#8bd7bd", "#ffc57f", "#f4f0ff", "#ff8d9f"],
     )
     line = style_plotly(line, 355)
-    line.update_layout(showlegend=False, yaxis_title="Projected stock", xaxis_title="")
+    line.update_layout(showlegend=False, yaxis_title="Expected stock on hand", xaxis_title="")
+    line.add_hline(y=0, line_color="#dc2626", line_dash="dot", opacity=0.85)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Projected Depletion")
+    st.subheader("Projected Stock Run-Down")
+    st.caption("These lines show how quickly stock is expected to fall if demand continues as forecast. The red line marks the stockout point.")
     st.markdown(
         compact_legend(
             [(sku, color) for sku, color in zip(top_timeline["sku"].drop_duplicates().tolist(), ["#a39afc", "#8bd7bd", "#ffc57f", "#f4f0ff", "#ff8d9f"])]
@@ -186,8 +216,10 @@ with right:
         color_discrete_map={"critical": "#ff8d9f", "high": "#ffc57f", "medium": "#a39afc", "low": "#8bd7bd"},
     )
     risk_fig = style_plotly(risk_fig, 270)
-    risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="SKU count")
+    risk_fig.update_xaxes(categoryorder="array", categoryarray=["critical", "high", "medium", "low"])
+    risk_fig.update_layout(showlegend=False, xaxis_title="", yaxis_title="Number of products")
+    risk_fig.update_traces(marker_line_color="rgba(255,255,255,0.3)", marker_line_width=0.8)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
-    st.subheader("Risk Mix")
+    st.subheader("Number Of Products In Each Risk Band")
     st.plotly_chart(risk_fig, width="stretch")
     st.markdown("</div>", unsafe_allow_html=True)
