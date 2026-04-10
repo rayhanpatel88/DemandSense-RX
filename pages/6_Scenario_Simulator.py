@@ -304,7 +304,7 @@ with outputs:
     lines = px.line(
         merged.melt(id_vars="date", var_name="Series", value_name="Units"),
         x="date", y="Units", color="Series",
-        color_discrete_map={"Baseline": "#4b5563", selected_preset: "#6366f1"},
+        color_discrete_map={"Baseline": "#4b5563", selected_preset: "#2563eb"},
     )
     lines = style_plotly(lines, 320)
     lines.for_each_trace(
@@ -332,7 +332,7 @@ with outputs:
         x="sku", y="Days", color="Series",
         barmode="group",
         color_discrete_map={
-            "days_to_stockout_scenario": "#6366f1",
+            "days_to_stockout_scenario": "#2563eb",
             "days_to_stockout_baseline": "#94a3b8",
         },
     )

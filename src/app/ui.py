@@ -1,4 +1,4 @@
-"""Shared Streamlit UI helpers for DemandSense-RX."""
+"""Shared Streamlit UI helpers for Nexar."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ PAGE_ICONS = {
     "scenario": "tune",
 }
 
-@st.cache_resource(show_spinner="Running DemandSense-RX pipeline...")
+@st.cache_resource(show_spinner="Running Nexar pipeline...")
 def get_pipeline_data() -> dict:
     from src.pipeline import run_pipeline
     from src.utils.config import load_config
@@ -145,7 +145,7 @@ def apply_page_config(page_title: str) -> None:
         }
         [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:hover {
             background: var(--accent-soft);
-            border-left-color: rgba(99,102,241,0.6);
+            border-left-color: rgba(37,99,235,0.6);
             transform: translateX(2px);
         }
         [data-testid="stSidebar"] .stSlider label,
@@ -355,7 +355,7 @@ def apply_page_config(page_title: str) -> None:
             padding:0.26rem 0.6rem;
             border-radius:999px;
             background:var(--accent-soft);
-            border:1px solid rgba(99,102,241,0.2);
+            border:1px solid rgba(37,99,235,0.2);
             color:var(--accent-2);
             font-size:0.68rem;
             font-weight:700;
@@ -402,7 +402,7 @@ def apply_page_config(page_title: str) -> None:
             height:7px;
             border-radius:999px;
             background:var(--accent);
-            box-shadow:0 0 12px rgba(99,102,241,0.65);
+            box-shadow:0 0 12px rgba(37,99,235,0.65);
         }
         .brand-lockup {
             display:flex;
@@ -466,7 +466,7 @@ def apply_page_config(page_title: str) -> None:
             gap:0.38rem;
             padding:0.28rem 0.7rem;
             background:var(--accent-soft);
-            border:1px solid rgba(99,102,241,0.25);
+            border:1px solid rgba(37,99,235,0.25);
             border-radius:999px;
             color:var(--accent-2);
             font-size:0.61rem;
@@ -567,7 +567,7 @@ def apply_page_config(page_title: str) -> None:
         }
         .stSlider [data-baseweb="slider"] { padding-top:0.25rem; }
         .stSlider [role="slider"] { background: var(--accent); }
-        .stSlider [data-testid="stTickBarMin"], .stSlider [data-testid="stTickBarMax"] { background: rgba(99,102,241,0.18); }
+        .stSlider [data-testid="stTickBarMin"], .stSlider [data-testid="stTickBarMax"] { background: rgba(37,99,235,0.18); }
         .stSegmentedControl [data-baseweb="button-group"] {
             background:var(--input-bg);
             border:1px solid var(--line);
@@ -583,7 +583,7 @@ def apply_page_config(page_title: str) -> None:
             border-radius:4px;
         }
         .stSegmentedControl button[aria-pressed="true"] {
-            background:linear-gradient(135deg, rgba(79,70,229,0.96) 0%, rgba(129,140,248,0.96) 100%) !important;
+            background:linear-gradient(135deg, rgba(29,78,216,0.96) 0%, rgba(96,165,250,0.96) 100%) !important;
             color:#f7f6ff !important;
         }
         .stToggle {
@@ -666,14 +666,14 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
             f"""
             <div class="brand-lockup">
                 <div class="brand-mark">
-                    <img src="{mark_uri}" alt="DemandSense-RX mark" />
+                    <img src="{mark_uri}" alt="Nexar mark" />
                 </div>
                 <div>
-                    <div class="brand-name">DemandSense-RX</div>
-                    <div class="brand-sub">Forecasting and Fulfilment</div>
+                    <div class="brand-name">Nexar</div>
+                    <div class="brand-sub">Supply Chain Intelligence</div>
                 </div>
             </div>
-            <div class="security-pill">Brand System Active</div>
+            <div class="security-pill">System Operational</div>
             """,
             unsafe_allow_html=True,
         )
@@ -825,15 +825,23 @@ def _logo_data_uri() -> str:
     if not path.exists():
         fallback = (
             "<svg width='96' height='96' viewBox='0 0 96 96' fill='none' xmlns='http://www.w3.org/2000/svg'>"
-            "<rect width='96' height='96' rx='20' fill='url(#bg)'/>"
-            "<rect x='1' y='1' width='94' height='94' rx='19' stroke='rgba(255,255,255,0.14)' stroke-width='1.5'/>"
-            "<path d='M15 50 L27 50 L33 29 L41 69 L47 35 L53 59 L61 50 L81 50' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'/>"
-            "<circle cx='47' cy='35' r='5.2' fill='#c7d2fe'/>"
-            "<circle cx='47' cy='35' r='9.5' fill='#818cf8' fill-opacity='0.18'/>"
-            "<circle cx='15' cy='50' r='2.6' fill='white' fill-opacity='0.42'/>"
-            "<circle cx='81' cy='50' r='2.6' fill='white' fill-opacity='0.42'/>"
+            "<rect width='96' height='96' rx='22' fill='url(#bg)'/>"
+            "<rect x='1' y='1' width='94' height='94' rx='21' stroke='rgba(255,255,255,0.1)' stroke-width='1.5'/>"
+            "<polygon points='48,17 71.4,30.5 71.4,57.5 48,71 24.6,57.5 24.6,30.5' fill='none' stroke='white' stroke-width='2' stroke-linejoin='round' opacity='0.65'/>"
+            "<polygon points='48,30 60.1,37 60.1,51 48,58 35.9,51 35.9,37' fill='rgba(255,255,255,0.06)' stroke='white' stroke-width='1.5' stroke-linejoin='round' opacity='0.32'/>"
+            "<line x1='48' y1='44' x2='48' y2='17' stroke='white' stroke-width='1.2' opacity='0.22'/>"
+            "<line x1='48' y1='44' x2='71.4' y2='57.5' stroke='white' stroke-width='1.2' opacity='0.22'/>"
+            "<line x1='48' y1='44' x2='24.6' y2='57.5' stroke='white' stroke-width='1.2' opacity='0.22'/>"
+            "<circle cx='48' cy='44' r='12' fill='#2563eb' fill-opacity='0.18'/>"
+            "<circle cx='48' cy='44' r='7' fill='#60a5fa' opacity='0.95'/>"
+            "<circle cx='48' cy='17' r='3.8' fill='white' opacity='0.88'/>"
+            "<circle cx='71.4' cy='30.5' r='3.8' fill='white' opacity='0.88'/>"
+            "<circle cx='24.6' cy='30.5' r='3.8' fill='white' opacity='0.88'/>"
+            "<circle cx='71.4' cy='57.5' r='2.8' fill='white' opacity='0.42'/>"
+            "<circle cx='48' cy='71' r='2.8' fill='white' opacity='0.42'/>"
+            "<circle cx='24.6' cy='57.5' r='2.8' fill='white' opacity='0.42'/>"
             "<defs><linearGradient id='bg' x1='0' y1='0' x2='96' y2='96' gradientUnits='userSpaceOnUse'>"
-            "<stop offset='0' stop-color='#1e1b4b'/><stop offset='0.48' stop-color='#2d2a80'/><stop offset='1' stop-color='#4338ca'/>"
+            "<stop offset='0' stop-color='#0b1f47'/><stop offset='0.5' stop-color='#102d6b'/><stop offset='1' stop-color='#1a4491'/>"
             "</linearGradient></defs></svg>"
         )
         encoded = base64.b64encode(fallback.encode("utf-8")).decode("utf-8")
@@ -870,16 +878,16 @@ def _get_theme_palette() -> dict[str, str]:
             "text": "#0f172a",
             "muted": "#64748b",
             "muted_2": "#94a3b8",
-            "accent": "#4f46e5",
-            "accent_2": "#7c73f8",
-            "accent_soft": "rgba(79, 70, 229, 0.08)",
+            "accent": "#1d4ed8",
+            "accent_2": "#3b82f6",
+            "accent_soft": "rgba(29, 78, 216, 0.08)",
             "good": "#059669",
             "warn": "#d97706",
             "bad": "#dc2626",
             "shadow": "rgba(15, 30, 60, 0.06)",
-            "card_glow": "rgba(79, 70, 229, 0.07)",
-            "app_grad_a": "rgba(79, 70, 229, 0.05)",
-            "app_grad_b": "rgba(16, 185, 129, 0.04)",
+            "card_glow": "rgba(29, 78, 216, 0.07)",
+            "app_grad_a": "rgba(29, 78, 216, 0.05)",
+            "app_grad_b": "rgba(14, 165, 233, 0.04)",
             "app_grad_c": "#f8faff",
             "sidebar_grad_a": "#fdfeff",
             "sidebar_grad_b": "#f3f7fc",
@@ -901,29 +909,29 @@ def _get_theme_palette() -> dict[str, str]:
             "plot_tick": "#64748b",
         }
     return {
-        "bg": "#06101e",
-        "bg_soft": "#091524",
-        "surface": "#0d1829",
-        "surface_2": "#101f35",
-        "surface_3": "#13253f",
-        "line": "rgba(99, 124, 172, 0.17)",
-        "line_strong": "rgba(120, 146, 194, 0.28)",
-        "text": "#e8eeff",
-        "muted": "#8da0c0",
-        "muted_2": "#637290",
-        "accent": "#6366f1",
-        "accent_2": "#a5b4fc",
-        "accent_soft": "rgba(99, 102, 241, 0.12)",
+        "bg": "#020b1a",
+        "bg_soft": "#06111f",
+        "surface": "#0a1628",
+        "surface_2": "#0d1c32",
+        "surface_3": "#10223c",
+        "line": "rgba(80, 120, 190, 0.17)",
+        "line_strong": "rgba(100, 148, 210, 0.28)",
+        "text": "#e4eeff",
+        "muted": "#7a9bbf",
+        "muted_2": "#506882",
+        "accent": "#2563eb",
+        "accent_2": "#60a5fa",
+        "accent_soft": "rgba(37, 99, 235, 0.12)",
         "good": "#34d399",
         "warn": "#fb923c",
         "bad": "#f87171",
-        "shadow": "rgba(0, 0, 0, 0.30)",
-        "card_glow": "rgba(99, 102, 241, 0.16)",
-        "app_grad_a": "rgba(99, 102, 241, 0.11)",
-        "app_grad_b": "rgba(56, 114, 255, 0.07)",
-        "app_grad_c": "#070e1b",
-        "sidebar_grad_a": "#060d19",
-        "sidebar_grad_b": "#0a1422",
+        "shadow": "rgba(0, 0, 0, 0.32)",
+        "card_glow": "rgba(37, 99, 235, 0.18)",
+        "app_grad_a": "rgba(37, 99, 235, 0.10)",
+        "app_grad_b": "rgba(14, 165, 233, 0.07)",
+        "app_grad_c": "#030c1c",
+        "sidebar_grad_a": "#020a18",
+        "sidebar_grad_b": "#071020",
         "hero_grad_a": "rgba(17, 32, 60, 0.97)",
         "hero_grad_b": "rgba(10, 22, 44, 0.97)",
         "hero_grad_c": "rgba(6, 14, 30, 0.99)",

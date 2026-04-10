@@ -1,20 +1,32 @@
 <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="96" height="96" rx="20" fill="url(#bg)"/>
-  <rect x="1" y="1" width="94" height="94" rx="19" stroke="rgba(255,255,255,0.14)" stroke-width="1.5"/>
-  <!-- Demand-signal pulse (ECG/Rx wave — demand sensing heartbeat) -->
-  <path d="M15 50 L27 50 L33 29 L41 69 L47 35 L53 59 L61 50 L81 50"
-        stroke="white" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-  <!-- Peak node highlight -->
-  <circle cx="47" cy="35" r="5.2" fill="#c7d2fe"/>
-  <circle cx="47" cy="35" r="9.5" fill="#818cf8" fill-opacity="0.18"/>
-  <!-- Terminal endpoint nodes -->
-  <circle cx="15" cy="50" r="2.6" fill="white" fill-opacity="0.42"/>
-  <circle cx="81" cy="50" r="2.6" fill="white" fill-opacity="0.42"/>
+  <rect width="96" height="96" rx="22" fill="url(#bg)"/>
+  <rect x="1" y="1" width="94" height="94" rx="21" stroke="rgba(255,255,255,0.1)" stroke-width="1.5"/>
+  <!-- Outer hexagon (pointy-top, r=27, center 48,44) -->
+  <polygon points="48,17 71.4,30.5 71.4,57.5 48,71 24.6,57.5 24.6,30.5"
+           fill="none" stroke="white" stroke-width="2" stroke-linejoin="round" opacity="0.65"/>
+  <!-- Inner hexagon (r=14) -->
+  <polygon points="48,30 60.1,37 60.1,51 48,58 35.9,51 35.9,37"
+           fill="rgba(255,255,255,0.06)" stroke="white" stroke-width="1.5" stroke-linejoin="round" opacity="0.32"/>
+  <!-- Radial spokes (alternate corners only, for open feel) -->
+  <line x1="48" y1="44" x2="48" y2="17" stroke="white" stroke-width="1.2" opacity="0.22"/>
+  <line x1="48" y1="44" x2="71.4" y2="57.5" stroke="white" stroke-width="1.2" opacity="0.22"/>
+  <line x1="48" y1="44" x2="24.6" y2="57.5" stroke="white" stroke-width="1.2" opacity="0.22"/>
+  <!-- Center node with glow -->
+  <circle cx="48" cy="44" r="12" fill="#2563eb" fill-opacity="0.18"/>
+  <circle cx="48" cy="44" r="7" fill="#60a5fa" opacity="0.95"/>
+  <!-- Outer corner nodes — highlighted trio -->
+  <circle cx="48" cy="17" r="3.8" fill="white" opacity="0.88"/>
+  <circle cx="71.4" cy="30.5" r="3.8" fill="white" opacity="0.88"/>
+  <circle cx="24.6" cy="30.5" r="3.8" fill="white" opacity="0.88"/>
+  <!-- Outer corner nodes — dimmed trio -->
+  <circle cx="71.4" cy="57.5" r="2.8" fill="white" opacity="0.42"/>
+  <circle cx="48" cy="71" r="2.8" fill="white" opacity="0.42"/>
+  <circle cx="24.6" cy="57.5" r="2.8" fill="white" opacity="0.42"/>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="96" y2="96" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#1e1b4b"/>
-      <stop offset="0.48" stop-color="#2d2a80"/>
-      <stop offset="1" stop-color="#4338ca"/>
+      <stop offset="0" stop-color="#0b1f47"/>
+      <stop offset="0.5" stop-color="#102d6b"/>
+      <stop offset="1" stop-color="#1a4491"/>
     </linearGradient>
   </defs>
 </svg>

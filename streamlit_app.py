@@ -1,4 +1,4 @@
-"""DemandSense-RX executive overview."""
+"""Nexar executive overview."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ except ImportError:
     from src.app.ui import apply_page_config, get_pipeline_data, metric_panel, render_header, render_sidebar, style_plotly
 
 
-apply_page_config("DemandSense-RX")
+apply_page_config("Nexar")
 with st.spinner("Loading demand intelligence and decision layers..."):
     data = get_pipeline_data()
 
@@ -157,9 +157,9 @@ with main_left:
             y=forecast["forecast"],
             mode="lines",
             name="Expected demand",
-            line=dict(color="#4f46e5", width=2.8),
+            line=dict(color="#2563eb", width=2.8),
             fill="tozeroy",
-            fillcolor="rgba(79,70,229,0.12)",
+            fillcolor="rgba(37,99,235,0.12)",
         )
     )
     demand_fig = style_plotly(demand_fig, 390)
@@ -182,7 +182,7 @@ with main_left:
         y="sku",
         orientation="h",
         text_auto=".0f",
-        color_discrete_sequence=["#4f46e5"],
+        color_discrete_sequence=["#2563eb"],
     )
     pressure_fig = style_plotly(pressure_fig, 355)
     pressure_fig.update_layout(
@@ -284,7 +284,7 @@ with ops_mid:
             marker=dict(
                 size=bubble_size / bubble_size.max() * 24 + 8,
                 color=cover_df["days_to_stockout"],
-                colorscale=[[0, "#dc2626"], [0.45, "#f97316"], [1, "#4f46e5"]],
+                colorscale=[[0, "#dc2626"], [0.45, "#f97316"], [1, "#2563eb"]],
                 line=dict(color="#ffffff", width=1),
                 showscale=False,
             ),

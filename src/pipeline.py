@@ -1,4 +1,4 @@
-"""DemandSense-RX pipeline orchestrator."""
+"""Nexar pipeline orchestrator."""
 
 from __future__ import annotations
 
