@@ -56,7 +56,7 @@ with left:
     summary_display = summary.reset_index().rename(columns={"model": "Forecast Model"}).replace({"Forecast Model": model_labels})
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Accuracy Summary")
-    st.dataframe(summary_display, width="stretch", hide_index=True)
+    st.dataframe(summary_display, use_container_width=True, hide_index=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -68,7 +68,7 @@ with right:
     comp.update_layout(legend=dict(orientation="h", y=1.08, x=0), xaxis_title="", yaxis_title="Accuracy score")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Which Forecast Model Performs Best")
-    st.plotly_chart(comp, width="stretch")
+    st.plotly_chart(comp, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 if not predictions.empty:
@@ -81,7 +81,7 @@ if not predictions.empty:
     line.update_layout(legend=dict(orientation="h", y=1.08, x=0), yaxis_title="Average forecast miss", xaxis_title="")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("How Accuracy Changed Over Time")
-    st.plotly_chart(line, width="stretch")
+    st.plotly_chart(line, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     lgbm = preds[preds["model"] == "Main AI Model"].copy()
@@ -94,7 +94,7 @@ if not predictions.empty:
         scatter.update_layout(showlegend=False, xaxis_title="Actual sales", yaxis_title="Forecast sales")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("How Close The Main Model Was To Reality")
-        st.plotly_chart(scatter, width="stretch")
+        st.plotly_chart(scatter, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 if not by_sku.empty:
@@ -102,5 +102,5 @@ if not by_sku.empty:
     focus = focus.rename(columns={"sku": "Product", **model_labels})
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader(f"Accuracy By Product ({metric_labels.get(metric, metric)})")
-    st.dataframe(focus.sort_values(by=focus.columns[1], ascending=False), width="stretch", hide_index=True, height=360)
+    st.dataframe(focus.sort_values(by=focus.columns[1], ascending=False), use_container_width=True, hide_index=True, height=360)
     st.markdown("</div>", unsafe_allow_html=True)

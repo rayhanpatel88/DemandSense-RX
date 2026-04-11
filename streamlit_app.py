@@ -106,34 +106,19 @@ for col, html in zip(
     with col:
         st.markdown(html, unsafe_allow_html=True)
 
-st.markdown(
-    f"""
-    <div class="panel">
-        <div class="page-kicker" style="margin-bottom:0.45rem;">In Plain English</div>
-        <div class="note" style="color:var(--text);">
-            <strong>Demand is the number of units we expect to sell.</strong><br>
-            <strong>Products to reorder</strong> are already below their target stock level.<br>
-            <strong>Products at risk</strong> may run out before replenishment arrives.<br>
-            <strong>Forecast confidence</strong> tells you how much trust to place in the numbers.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.expander("What these numbers mean"):
+    st.markdown(
+        """
+        **Demand** is the number of units we expect to sell.
+        **Products to reorder** are already below their target stock level.
+        **Products at risk** may run out before replenishment arrives.
+        **Forecast confidence** tells you how much trust to place in the numbers.
 
-st.markdown(
-    f"""
-    <div class="panel">
-        <div class="page-kicker" style="margin-bottom:0.45rem;">How Shortages Are Identified</div>
-        <div class="note" style="color:var(--text);">
-            A product is flagged when <strong>current stock is not enough to cover expected demand during supplier lead time plus safety buffer</strong>.<br>
-            We base that on four things for each product: <strong>current stock on hand</strong>, <strong>forecast demand</strong>, <strong>lead time in days</strong>, and the <strong>target service level</strong>.<br>
-            If stock falls below the reorder point, it enters the reorder queue. If projected stock hits zero before replenishment arrives, it moves into a higher shortage-risk band.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        A product is flagged when current stock is not enough to cover expected demand during supplier lead time plus safety buffer.
+        This is based on: current stock on hand, forecast demand, lead time in days, and the target service level.
+        If stock falls below the reorder point, it enters the reorder queue. If projected stock hits zero before replenishment arrives, it moves into a higher shortage-risk band.
+        """,
+    )
 
 main_left, main_right = st.columns([1.65, 1.0], gap="large")
 
@@ -148,7 +133,7 @@ with main_left:
             y=history.tail(180)["demand"],
             mode="lines",
             name="Actual demand",
-            line=dict(color="#64748b", width=2.2),
+            line=dict(color="#4b6480", width=1.8),
         )
     )
     demand_fig.add_trace(
@@ -157,9 +142,9 @@ with main_left:
             y=forecast["forecast"],
             mode="lines",
             name="Expected demand",
-            line=dict(color="#2563eb", width=2.8),
+            line=dict(color="#3b82f6", width=2.4),
             fill="tozeroy",
-            fillcolor="rgba(37,99,235,0.12)",
+            fillcolor="rgba(59,130,246,0.1)",
         )
     )
     demand_fig = style_plotly(demand_fig, 390)
@@ -171,7 +156,7 @@ with main_left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Demand Trend And Next 30 Days")
     st.caption("The grey line shows what customers bought recently. The blue line shows what we expect them to buy next.")
-    st.plotly_chart(demand_fig, width="stretch")
+    st.plotly_chart(demand_fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     top_products = future_7d.groupby("sku", as_index=False)["forecast"].sum().sort_values("forecast", ascending=False).head(10)
@@ -182,7 +167,7 @@ with main_left:
         y="sku",
         orientation="h",
         text_auto=".0f",
-        color_discrete_sequence=["#2563eb"],
+        color_discrete_sequence=["#3b82f6"],
     )
     pressure_fig = style_plotly(pressure_fig, 355)
     pressure_fig.update_layout(
@@ -194,7 +179,7 @@ with main_left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Top Products Driving Demand This Week")
     st.caption("These products are expected to account for the most near-term sales, so they deserve the closest stock monitoring.")
-    st.plotly_chart(pressure_fig, width="stretch")
+    st.plotly_chart(pressure_fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with main_right:
@@ -209,7 +194,7 @@ with main_right:
         orientation="h",
         text="count",
         color="risk",
-        color_discrete_map={"critical": "#dc2626", "high": "#f97316", "medium": "#64748b", "low": "#10b981"},
+        color_discrete_map={"critical": "#ef4444", "high": "#f97316", "medium": "#94a3b8", "low": "#22c55e"},
     )
     risk_fig = style_plotly(risk_fig, 300)
     risk_fig.update_layout(showlegend=False, xaxis_title="Number of products", yaxis_title="")
@@ -217,7 +202,7 @@ with main_right:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("How Much Stock Risk We Have")
     st.caption("This shows how many products fall into each risk level, from critical down to low.")
-    st.plotly_chart(risk_fig, width="stretch")
+    st.plotly_chart(risk_fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     weakest = reliability_df.sort_values("reliability_score").head(4) if not reliability_df.empty else None
@@ -264,7 +249,7 @@ with ops_left:
     st.caption("A simple restocking queue showing which products are most likely to need action soon.")
     st.dataframe(
         reorder_table[["Product", "Current Stock", "Reorder Level", "Suggested Order", "Risk Level"]],
-        width="stretch",
+        use_container_width=True,
         hide_index=True,
         height=330,
     )
@@ -297,7 +282,7 @@ with ops_mid:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("High Demand Products With Thin Stock Cover")
     st.caption("Products near the bottom-right are the most exposed: strong expected demand and not much time before stock runs out. The orange guide marks roughly two weeks of cover.")
-    st.plotly_chart(cover_fig, width="stretch")
+    st.plotly_chart(cover_fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with ops_right:

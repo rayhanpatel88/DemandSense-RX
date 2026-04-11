@@ -43,7 +43,7 @@ with left:
     fig.update_layout(coloraxis_showscale=False, yaxis={"categoryorder": "total ascending"}, yaxis_title="", xaxis_title="How strongly this input influences the forecast")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Which Inputs Matter Most")
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -61,7 +61,7 @@ with right:
         shap_fig.update_layout(coloraxis_showscale=False, yaxis={"categoryorder": "total ascending"}, yaxis_title="", xaxis_title="Average strength of impact on the forecast")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Inputs With The Biggest Overall Impact")
-        st.plotly_chart(shap_fig, width="stretch")
+        st.plotly_chart(shap_fig, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
@@ -77,7 +77,7 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
     beeswarm.add_vline(x=0, line_dash="dash", line_color="#6d685f")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("How Each Input Pushes Forecasts Up Or Down")
-    st.plotly_chart(beeswarm, width="stretch")
+    st.plotly_chart(beeswarm, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     explainer = shap_data.get("explainer")
@@ -97,7 +97,7 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
         with info:
             st.markdown('<div class="panel">', unsafe_allow_html=True)
             st.subheader("Why One Specific Forecast Looks The Way It Does")
-            st.plotly_chart(waterfall, width="stretch")
+            st.plotly_chart(waterfall, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
         with panel:
             st.markdown('<div class="panel">', unsafe_allow_html=True)
@@ -109,5 +109,5 @@ if shap_data and "shap_df" in shap_data and "sample_df" in shap_data:
                     "shap_value": "Impact On Forecast",
                 }
             )
-            st.dataframe(local_display, width="stretch", hide_index=True)
+            st.dataframe(local_display, use_container_width=True, hide_index=True)
             st.markdown("</div>", unsafe_allow_html=True)

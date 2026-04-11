@@ -280,7 +280,7 @@ with controls:
         _pd.DataFrame(all_presets_summary),
         hide_index=True,
         height=260,
-        width="stretch",
+        use_container_width=True,
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -319,7 +319,7 @@ with outputs:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Expected Sales: Scenario vs Current Plan")
     st.caption("This compares expected sales in the scenario against the current plan over the next 30 days.")
-    st.plotly_chart(lines, width="stretch")
+    st.plotly_chart(lines, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     compare = scenario_inventory[["sku", "days_to_stockout"]].merge(
@@ -350,7 +350,7 @@ with outputs:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("How Stock Cover Changes")
     st.caption("This shows which products would run out sooner or later under the scenario compared with today’s plan.")
-    st.plotly_chart(bars, width="stretch")
+    st.plotly_chart(bars, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Fulfilment rate vs robots sensitivity (static insight)

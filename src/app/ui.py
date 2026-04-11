@@ -60,93 +60,71 @@ def apply_page_config(page_title: str) -> None:
     css = Template(
         """
         <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap');
-        :root{
-            --bg:$bg;
-            --bg-soft:$bg_soft;
-            --surface:$surface;
-            --surface-2:$surface_2;
-            --surface-3:$surface_3;
-            --line:$line;
-            --line-strong:$line_strong;
-            --text:$text;
-            --muted:$muted;
-            --muted-2:$muted_2;
-            --accent:$accent;
-            --accent-2:$accent_2;
-            --accent-soft:$accent_soft;
-            --good:$good;
-            --warn:$warn;
-            --bad:$bad;
-            --shadow:$shadow;
-            --card-glow:$card_glow;
-            --app-grad-a:$app_grad_a;
-            --app-grad-b:$app_grad_b;
-            --app-grad-c:$app_grad_c;
-            --sidebar-grad-a:$sidebar_grad_a;
-            --sidebar-grad-b:$sidebar_grad_b;
-            --hero-grad-a:$hero_grad_a;
-            --hero-grad-b:$hero_grad_b;
-            --hero-grad-c:$hero_grad_c;
-            --panel-grad-a:$panel_grad_a;
-            --panel-grad-b:$panel_grad_b;
-            --metric-grad-a:$metric_grad_a;
-            --metric-grad-b:$metric_grad_b;
-            --input-bg:$input_bg;
-            --table-head:$table_head;
-            --table-body:$table_body;
-            --table-hover:$table_hover;
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+        :root {
+            --bg: $bg;
+            --surface: $surface;
+            --surface-2: $surface_2;
+            --line: $line;
+            --line-strong: $line_strong;
+            --text: $text;
+            --muted: $muted;
+            --muted-2: $muted_2;
+            --accent: $accent;
+            --accent-2: $accent_2;
+            --accent-soft: $accent_soft;
+            --good: $good;
+            --warn: $warn;
+            --bad: $bad;
+            --shadow: $shadow;
+            --hero-bg: $hero_grad_a;
+            --input-bg: $input_bg;
+            --table-head: $table_head;
+            --table-body: $table_body;
+            --table-hover: $table_hover;
+            --sidebar-bg: $sidebar_grad_a;
         }
-        html, body, [class*="css"] { font-family:'IBM Plex Sans', sans-serif; }
-        /* Hide native Streamlit multipage nav — custom nav in sidebar replaces it */
+
+        /* ── Base ────────────────────────────────────────────── */
+        html, body, [class*="css"] {
+            font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+        }
         [data-testid="stSidebarNav"] { display: none !important; }
-        .stApp {
-            color: var(--text);
-            background:
-                radial-gradient(circle at top left, var(--app-grad-a), transparent 34%),
-                radial-gradient(circle at top right, var(--app-grad-b), transparent 30%),
-                linear-gradient(180deg, var(--app-grad-c) 0%, var(--bg) 100%);
-        }
+        .stApp { color: var(--text); background: var(--bg); }
         .block-container {
-            max-width: 1500px;
-            padding-top: 1rem;
-            padding-bottom: 2.6rem;
-            padding-left: 1.1rem;
-            padding-right: 1.1rem;
+            max-width: 1480px;
+            padding: 1rem 1.25rem 3rem;
         }
+
+        /* ── Sidebar ─────────────────────────────────────────── */
         [data-testid="stSidebar"] {
-            background: linear-gradient(180deg, var(--sidebar-grad-a) 0%, var(--sidebar-grad-b) 100%);
+            background: var(--sidebar-bg);
             border-right: 1px solid var(--line);
         }
         [data-testid="stSidebar"] * { color: var(--text) !important; }
-        [data-testid="stSidebar"] .block-container {
-            padding-top: 1rem;
-            padding-left: 0.9rem;
-            padding-right: 0.9rem;
-        }
+        [data-testid="stSidebar"] .block-container { padding: 1.25rem 1rem 2rem; }
         [data-testid="stSidebar"] .stButton button {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-            color: #fcfcff !important;
+            background: var(--accent);
+            color: #fff !important;
             border: none;
-            border-radius: 999px;
-            font-size: 0.69rem;
-            font-weight: 700;
-            letter-spacing: 0.16em;
+            border-radius: 7px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
             text-transform: uppercase;
-            min-height: 2.8rem;
-            box-shadow: 0 18px 38px var(--card-glow);
+            min-height: 2.5rem;
         }
         [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"] {
             border-left: 2px solid transparent;
-            border-radius: 14px;
-            padding: 0.75rem 0.9rem;
+            border-radius: 5px;
+            padding: 0.6rem 0.8rem;
             background: transparent;
-            transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+            transition: background 0.12s, border-color 0.12s;
         }
         [data-testid="stSidebar"] [data-testid="stPageLink-NavLink"]:hover {
             background: var(--accent-soft);
-            border-left-color: rgba(37,99,235,0.6);
-            transform: translateX(2px);
+            border-left-color: var(--accent);
         }
         [data-testid="stSidebar"] .stSlider label,
         [data-testid="stSidebar"] .stSelectbox label,
@@ -154,504 +132,457 @@ def apply_page_config(page_title: str) -> None:
         [data-testid="stSidebar"] .stRadio label,
         [data-testid="stSidebar"] .stSegmentedControl label,
         [data-testid="stSidebar"] .stToggle label {
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.14em;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
             text-transform: uppercase;
             color: var(--muted) !important;
         }
+
+        /* ── Headings ────────────────────────────────────────── */
         .stApp h1, .stApp h2, .stApp h3 {
-            font-family:'Space Grotesk', sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             color: var(--text);
-            letter-spacing: -0.03em;
+            letter-spacing: -0.025em;
         }
-        .page-kicker {
-            font-size: 0.67rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.24em;
-            color: var(--accent-2);
+        .stApp h2 {
+            font-size: 0.94rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
             margin-bottom: 0.5rem;
         }
+        .stApp h3 { font-size: 0.88rem; font-weight: 600; }
+
+        /* ── Page identity ───────────────────────────────────── */
+        .page-kicker {
+            font-size: 0.62rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--accent-2);
+            margin-bottom: 0.4rem;
+        }
         .page-title {
-            font-size: clamp(2.35rem, 5vw, 4.1rem);
-            line-height: 0.95;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.75rem, 3vw, 2.5rem);
+            line-height: 1.02;
             font-weight: 700;
-            margin: 0 0 0.45rem 0;
+            letter-spacing: -0.03em;
+            margin: 0 0 0.4rem;
         }
         .page-subtitle {
-            max-width: 58rem;
+            max-width: 54rem;
             color: var(--muted);
-            font-size: 1rem;
-            line-height: 1.55;
+            font-size: 0.91rem;
+            font-weight: 400;
+            line-height: 1.58;
         }
+
+        /* ── Page shell (header block) ───────────────────────── */
+        .page-shell {
+            padding: 1.1rem 1.25rem;
+            margin-bottom: 1.25rem;
+            background: var(--hero-bg);
+            border: 1px solid var(--line);
+            border-radius: 11px;
+        }
+
+        /* ── Hero badges (contextual data pills) ─────────────── */
         .hero-badges {
-            display:flex;
-            flex-wrap:wrap;
-            gap:0.65rem;
-            margin-top:1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+            margin-top: 0.75rem;
         }
         .hero-badge {
-            display:inline-flex;
-            align-items:center;
-            gap:0.5rem;
-            padding:0.44rem 0.9rem;
-            border-radius:999px;
-            border:1px solid var(--line);
-            background:rgba(255,255,255,0.04);
-            color:var(--text);
-            font-size:0.74rem;
-            font-weight:600;
-            letter-spacing:0.01em;
-            transition: border-color 0.2s, background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.26rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,0.02);
+            color: var(--muted);
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: border-color 0.12s;
         }
-        .hero-badge:hover {
-            border-color: var(--line-strong);
-            background:rgba(255,255,255,0.07);
-        }
+        .hero-badge:hover { border-color: var(--line-strong); }
         .hero-badge-dot {
-            width:0.52rem;
-            height:0.52rem;
-            border-radius:999px;
-            background:var(--accent);
-            box-shadow:0 0 10px var(--card-glow);
-            flex-shrink:0;
+            width: 0.38rem; height: 0.38rem;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
         }
-        .hero-side {
-            display:grid;
-            gap:0.9rem;
-        }
+
+        /* ── Glass card (contextual side panels) ─────────────── */
+        .hero-side { display: grid; gap: 0.75rem; }
         .glass-card {
-            background:rgba(255,255,255,0.04);
-            border:1px solid var(--line);
-            border-radius:18px;
-            padding:1rem 1.1rem;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            box-shadow: 0 2px 12px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.06);
-            transition: border-color 0.2s ease, background 0.2s ease;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 0.85rem 1rem;
+            transition: border-color 0.12s;
         }
-        .glass-card:hover {
-            background:rgba(255,255,255,0.06);
-            border-color: var(--line-strong);
-        }
+        .glass-card:hover { border-color: var(--line-strong); }
         .glass-label {
             color: var(--muted);
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.16em;
+            font-size: 0.61rem;
+            font-weight: 600;
+            letter-spacing: 0.13em;
             text-transform: uppercase;
         }
         .glass-value {
-            margin-top:0.32rem;
-            font-family:'Space Grotesk', sans-serif;
-            font-size:1.2rem;
-            font-weight:700;
-        }
-        .page-meta {
-            display:flex;
-            flex-direction:column;
-            align-items:flex-start;
-            gap:0.4rem;
-            text-align:left;
-        }
-        .page-meta-top {
-            font-size: 0.66rem;
+            margin-top: 0.25rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.05rem;
             font-weight: 700;
-            letter-spacing: 0.18em;
-            text-transform: uppercase;
-            color: var(--muted);
         }
+
+        /* ── Page meta ───────────────────────────────────────── */
         .page-meta-bottom {
-            font-family:'IBM Plex Mono', monospace;
-            font-size: 0.66rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.62rem;
             color: var(--muted-2);
-            letter-spacing: 0.04em;
+            letter-spacing: 0.03em;
         }
+
+        /* ── Panel system ────────────────────────────────────── */
         .panel {
-            background:
-                linear-gradient(180deg, var(--panel-grad-a) 0%, var(--panel-grad-b) 100%);
+            background: var(--surface);
             border: 1px solid var(--line);
-            border-radius: 22px;
-            padding: 1.1rem 1.15rem;
-            margin-bottom: 1.35rem;
-            box-shadow: 0 4px 24px var(--shadow), 0 1px 4px rgba(0,0,0,0.06);
-            transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+            border-radius: 11px;
+            padding: 1rem 1.1rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 6px var(--shadow);
+            transition: border-color 0.12s;
         }
-        .panel:hover {
-            box-shadow: 0 8px 40px var(--shadow), 0 2px 8px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
-            border-color: var(--line-strong);
-        }
-        .panel-tight { padding: 0.82rem 0.95rem; }
+        .panel:hover { border-color: var(--line-strong); }
+        .panel-tight { padding: 0.75rem 0.9rem; }
         .panel-hero {
-            background:
-                linear-gradient(135deg, var(--hero-grad-a) 0%, var(--hero-grad-b) 65%, var(--hero-grad-c) 100%);
+            background: var(--hero-bg);
             border-left: 3px solid var(--accent);
         }
-        .panel-hero:hover { transform: none; box-shadow: 0 4px 24px var(--shadow); }
+
+        /* ── Metric cards ────────────────────────────────────── */
         .metric-panel {
-            position:relative;
-            overflow:hidden;
-            background: linear-gradient(160deg, var(--metric-grad-a) 0%, var(--metric-grad-b) 100%);
+            position: relative;
+            overflow: hidden;
+            background: var(--surface);
             border: 1px solid var(--line);
-            border-radius: 22px;
-            padding: 1.1rem 1.1rem 1rem 1.2rem;
-            min-height: 148px;
-            margin-bottom: 1.35rem;
-            box-shadow: 0 4px 20px var(--shadow);
-            transition: box-shadow 0.22s ease, transform 0.22s ease, border-color 0.22s ease;
+            border-radius: 11px;
+            padding: 1rem 1.1rem 0.9rem 1.15rem;
+            min-height: 116px;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 5px var(--shadow);
+            transition: border-color 0.12s;
         }
-        .metric-panel:hover {
-            box-shadow: 0 8px 36px var(--shadow);
-            transform: translateY(-1px);
-            border-color: var(--line-strong);
-        }
+        .metric-panel:hover { border-color: var(--line-strong); }
         .metric-panel::before {
-            content:"";
-            position:absolute;
-            left:0;
-            top:0;
-            bottom:0;
-            width:3px;
-            border-radius:3px 0 0 3px;
-            background: linear-gradient(180deg, var(--accent) 0%, var(--accent-soft) 100%);
-        }
-        .metric-panel::after {
-            content:"";
-            position:absolute;
-            top:-32px;
-            right:-32px;
-            width:100px;
-            height:100px;
-            border-radius:50%;
-            background: radial-gradient(circle, var(--card-glow) 0%, transparent 70%);
-            pointer-events:none;
+            content: "";
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            border-radius: 3px 0 0 3px;
+            background: var(--accent);
         }
         .metric-label {
             color: var(--muted);
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.18em;
+            font-size: 0.64rem;
+            font-weight: 600;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
         }
         .metric-value {
-            font-family:'Space Grotesk', sans-serif;
-            font-size: clamp(1.9rem, 3vw, 2.7rem);
-            line-height: 1.04;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: clamp(1.6rem, 2.4vw, 2.15rem);
+            line-height: 1.06;
             font-weight: 700;
-            margin-top: 0.38rem;
+            letter-spacing: -0.02em;
+            margin-top: 0.3rem;
             color: var(--text);
         }
         .metric-detail {
-            margin-top: 0.55rem;
+            margin-top: 0.45rem;
             color: var(--muted);
-            font-size: 0.82rem;
+            font-size: 0.79rem;
             line-height: 1.45;
         }
-        .metric-chip {
-            display:inline-flex;
-            margin-top:0.9rem;
-            padding:0.26rem 0.6rem;
-            border-radius:999px;
-            background:var(--accent-soft);
-            border:1px solid rgba(37,99,235,0.2);
-            color:var(--accent-2);
-            font-size:0.68rem;
-            font-weight:700;
-            letter-spacing:0.06em;
-        }
+
+        /* ── Body text in panels ─────────────────────────────── */
         .note {
             color: var(--muted);
-            font-size: 0.88rem;
-            line-height: 1.58;
+            font-size: 0.86rem;
+            line-height: 1.62;
         }
+
+        /* ── Entity tags (SKU labels) ────────────────────────── */
         .tag {
-            display:inline-flex;
-            align-items:center;
-            padding:0.16rem 0.44rem;
-            margin-right:0.38rem;
-            border:1px solid var(--line-strong);
-            border-radius:5px;
-            background:var(--accent-soft);
-            color:var(--accent-2);
-            font-family:'IBM Plex Mono', monospace;
-            font-size:0.67rem;
-            letter-spacing:0.03em;
-            font-weight:600;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.13rem 0.4rem;
+            margin-right: 0.35rem;
+            border: 1px solid var(--line-strong);
+            border-radius: 4px;
+            background: var(--accent-soft);
+            color: var(--accent-2);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.64rem;
+            letter-spacing: 0.02em;
+            font-weight: 500;
         }
-        .status-strip {
-            display:flex;
-            gap:1.5rem;
-            flex-wrap:wrap;
-            align-items:center;
-            margin-top:0.85rem;
-        }
-        .status-item {
-            display:flex;
-            align-items:center;
-            gap:0.4rem;
-            color:var(--muted);
-            font-size:0.7rem;
-            letter-spacing:0.12em;
-            text-transform:uppercase;
-            font-weight:700;
-        }
-        .status-dot {
-            width:7px;
-            height:7px;
-            border-radius:999px;
-            background:var(--accent);
-            box-shadow:0 0 12px rgba(37,99,235,0.65);
-        }
+
+        /* ── Brand lockup ────────────────────────────────────── */
         .brand-lockup {
-            display:flex;
-            align-items:center;
-            gap:0.8rem;
-            margin-bottom:0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 0.72rem;
+            margin-bottom: 1rem;
         }
         .brand-mark {
-            width:42px;
-            height:42px;
-            border-radius:13px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            overflow:hidden;
-            box-shadow:0 6px 24px var(--card-glow), 0 1px 3px rgba(0,0,0,0.2);
-            flex-shrink:0;
+            width: 36px; height: 36px;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
         }
-        .brand-mark img { width:100%; height:100%; display:block; }
+        .brand-mark img { width: 100%; height: 100%; display: block; }
         .brand-name {
-            font-family:'Space Grotesk', sans-serif;
-            font-size:1.08rem;
-            line-height:1;
-            letter-spacing:-0.03em;
-            font-weight:700;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.98rem;
+            line-height: 1;
+            letter-spacing: -0.02em;
+            font-weight: 700;
         }
         .brand-sub {
             color: var(--muted);
-            font-size:0.64rem;
-            letter-spacing:0.16em;
-            text-transform:uppercase;
-            font-weight:700;
-            margin-top:0.22rem;
+            font-size: 0.6rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 0.16rem;
         }
+
+        /* ── Sidebar KPI cards ───────────────────────────────── */
         .sidebar-kpi {
-            background: linear-gradient(160deg, var(--panel-grad-a) 0%, var(--panel-grad-b) 100%);
+            background: var(--surface-2);
             border: 1px solid var(--line);
-            border-radius: 16px;
-            padding: 0.8rem 0.9rem;
-            margin: 0.3rem 0 0.7rem 0;
-            transition: border-color 0.2s ease;
+            border-radius: 7px;
+            padding: 0.7rem 0.85rem;
+            margin: 0.25rem 0 0.65rem;
+            transition: border-color 0.12s;
         }
         .sidebar-kpi:hover { border-color: var(--line-strong); }
         .sidebar-kpi strong {
-            display:block;
-            color:var(--text);
-            font-family:'IBM Plex Mono', monospace;
-            font-size:0.82rem;
-            letter-spacing:0.02em;
+            display: block;
+            color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.01em;
         }
         .sidebar-kpi span {
-            color:var(--muted);
-            font-size:0.65rem;
-            letter-spacing:0.14em;
-            text-transform:uppercase;
-            font-weight:700;
+            color: var(--muted);
+            font-size: 0.6rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 600;
         }
+
+        /* ── Status badge ────────────────────────────────────── */
         .security-pill {
-            display:inline-flex;
-            align-items:center;
-            gap:0.38rem;
-            padding:0.28rem 0.7rem;
-            background:var(--accent-soft);
-            border:1px solid rgba(37,99,235,0.25);
-            border-radius:999px;
-            color:var(--accent-2);
-            font-size:0.61rem;
-            font-weight:700;
-            letter-spacing:0.14em;
-            text-transform:uppercase;
+            display: inline-flex;
+            align-items: center;
+            padding: 0.18rem 0.5rem;
+            background: var(--accent-soft);
+            border: 1px solid rgba(59,130,246,0.2);
+            border-radius: 4px;
+            color: var(--accent-2);
+            font-size: 0.58rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
         }
+
+        /* ── Risk badges ─────────────────────────────────────── */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.15rem 0.44rem;
+            border-radius: 4px;
+            font-size: 0.61rem;
+            font-weight: 600;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+        }
+        .risk-critical { background: rgba(239,68,68,0.12); color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+        .risk-high     { background: rgba(249,115,22,0.12); color: #fb923c; border: 1px solid rgba(249,115,22,0.2); }
+        .risk-medium   { background: rgba(234,179,8,0.1);   color: #eab308; border: 1px solid rgba(234,179,8,0.18); }
+        .risk-low      { background: rgba(34,197,94,0.1);   color: #22c55e; border: 1px solid rgba(34,197,94,0.18); }
+
+        /* ── Chart legend ────────────────────────────────────── */
         .legend-rail {
-            display:flex;
-            flex-wrap:wrap;
-            gap:0.75rem 1rem;
-            align-items:center;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem 0.85rem;
+            align-items: center;
+            margin-bottom: 0.3rem;
         }
         .legend-item {
-            display:inline-flex;
-            align-items:center;
-            gap:0.42rem;
-            color:var(--muted);
-            font-size:0.68rem;
-            font-weight:700;
-            letter-spacing:0.12em;
-            text-transform:uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.36rem;
+            color: var(--muted);
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
         }
         .legend-swatch {
-            width:10px;
-            height:10px;
-            border-radius:999px;
-            border:1px solid rgba(255,255,255,0.14);
+            width: 8px; height: 8px;
+            border-radius: 2px;
         }
+
+        /* ── Status rail (KPI row inside panels) ─────────────── */
         .status-rail {
-            display:grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap:0.7rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+            gap: 0.55rem;
         }
         .status-card {
-            background:rgba(255,255,255,0.025);
-            border:1px solid var(--line);
-            border-radius:16px;
-            padding:0.85rem 0.9rem;
-            transition: border-color 0.2s ease, background 0.2s ease;
+            background: var(--surface-2);
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 0.65rem 0.78rem;
+            transition: border-color 0.12s;
         }
-        .status-card:hover {
-            background:rgba(255,255,255,0.045);
-            border-color: var(--line-strong);
-        }
+        .status-card:hover { border-color: var(--line-strong); }
         .status-card-label {
-            color:var(--muted);
-            font-size:0.64rem;
-            font-weight:700;
-            letter-spacing:0.14em;
-            text-transform:uppercase;
+            color: var(--muted);
+            font-size: 0.61rem;
+            font-weight: 600;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
         }
         .status-card-value {
-            margin-top:0.28rem;
-            color:#f2f5ff;
-            font-family:'IBM Plex Mono', monospace;
-            font-size:1rem;
+            margin-top: 0.22rem;
+            color: var(--text);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.95rem;
+            font-weight: 500;
         }
+
+        /* ── Table captions ──────────────────────────────────── */
         .table-note {
-            color:var(--muted);
-            font-size:0.72rem;
-            letter-spacing:0.08em;
-            text-transform:uppercase;
+            color: var(--muted);
+            font-size: 0.68rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-bottom: 0.35rem;
         }
+
+        /* ── DataFrames ──────────────────────────────────────── */
         div[data-testid="stDataFrame"] {
-            border:1px solid var(--line);
-            border-radius:18px;
-            overflow:hidden;
-            background:var(--table-body);
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            overflow: hidden;
         }
-        div[data-testid="stDataFrame"] [role="table"] { color:var(--text); }
+        div[data-testid="stDataFrame"] [role="table"] { color: var(--text); }
         div[data-testid="stDataFrame"] thead tr th {
-            background:var(--table-head) !important;
-            color:var(--muted) !important;
-            font-size:0.67rem !important;
-            text-transform:uppercase !important;
-            letter-spacing:0.12em !important;
-            border-bottom:1px solid var(--line) !important;
+            background: var(--table-head) !important;
+            color: var(--muted) !important;
+            font-size: 0.63rem !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.1em !important;
+            font-weight: 600 !important;
+            border-bottom: 1px solid var(--line) !important;
         }
         div[data-testid="stDataFrame"] tbody tr td {
-            background:var(--table-body) !important;
-            border-bottom:1px solid var(--line) !important;
-            font-size:0.77rem !important;
+            background: var(--table-body) !important;
+            border-bottom: 1px solid var(--line) !important;
+            font-size: 0.79rem !important;
         }
-        div[data-testid="stDataFrame"] tbody tr:hover td { background:var(--table-hover) !important; }
+        div[data-testid="stDataFrame"] tbody tr:hover td { background: var(--table-hover) !important; }
+
+        /* ── Form elements ───────────────────────────────────── */
         .stSelectbox div[data-baseweb="select"] > div,
         .stMultiSelect div[data-baseweb="select"] > div,
         .stTextInput input,
         .stNumberInput input {
-            background:var(--input-bg);
-            border:1px solid var(--line);
-            color:var(--text);
-            border-radius:16px;
+            background: var(--input-bg);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 6px;
         }
-        .stButton button {
-            border-radius:999px;
-            border:1px solid var(--line);
-        }
-        .stSlider [data-baseweb="slider"] { padding-top:0.25rem; }
+        .stButton button { border-radius: 7px; border: 1px solid var(--line); }
+        .stSlider [data-baseweb="slider"] { padding-top: 0.2rem; }
         .stSlider [role="slider"] { background: var(--accent); }
-        .stSlider [data-testid="stTickBarMin"], .stSlider [data-testid="stTickBarMax"] { background: rgba(37,99,235,0.18); }
+        .stSlider [data-testid="stTickBarMin"],
+        .stSlider [data-testid="stTickBarMax"] { background: var(--accent-soft); }
         .stSegmentedControl [data-baseweb="button-group"] {
-            background:var(--input-bg);
-            border:1px solid var(--line);
-            border-radius:16px;
-            padding:0.2rem;
+            background: var(--input-bg);
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 0.18rem;
         }
         .stSegmentedControl button[data-baseweb="button"] {
-            color:var(--muted);
-            font-size:0.7rem;
-            letter-spacing:0.12em;
-            text-transform:uppercase;
-            font-weight:700;
-            border-radius:4px;
+            color: var(--muted);
+            font-size: 0.67rem;
+            letter-spacing: 0.09em;
+            text-transform: uppercase;
+            font-weight: 600;
+            border-radius: 4px;
         }
         .stSegmentedControl button[aria-pressed="true"] {
-            background:linear-gradient(135deg, rgba(29,78,216,0.96) 0%, rgba(96,165,250,0.96) 100%) !important;
-            color:#f7f6ff !important;
+            background: var(--accent) !important;
+            color: #f4f8ff !important;
         }
         .stToggle {
-            background:rgba(255,255,255,0.04);
-            border:1px solid var(--line);
-            border-radius:18px;
-            padding:0.55rem 0.85rem;
+            background: rgba(255,255,255,0.025);
+            border: 1px solid var(--line);
+            border-radius: 7px;
+            padding: 0.45rem 0.75rem;
         }
         .stToggle [data-baseweb="checkbox"] > label { color: var(--muted) !important; }
-        .stCaption { color: var(--muted) !important; }
+        .stCaption { color: var(--muted) !important; font-size: 0.8rem !important; }
         div[data-testid="stMetric"] {
-            background:linear-gradient(180deg, var(--metric-grad-a) 0%, var(--metric-grad-b) 100%);
-            border:1px solid var(--line);
-            border-radius:20px;
-            padding:0.75rem 0.9rem;
+            background: var(--surface);
+            border: 1px solid var(--line);
+            border-radius: 9px;
+            padding: 0.7rem 0.85rem;
         }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
+
+        /* ── Scrollbar ───────────────────────────────────────── */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--muted-2); }
-        /* Page shell shimmer */
-        .page-shell {
-            position: relative;
-            overflow: hidden;
-            padding: 1.4rem;
-            margin-bottom: 1.35rem;
-            background:
-                radial-gradient(circle at top right, var(--card-glow), transparent 42%),
-                linear-gradient(135deg, var(--hero-grad-a) 0%, var(--hero-grad-b) 58%, var(--hero-grad-c) 100%);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: 0 4px 32px var(--shadow);
-        }
-        .page-shell::before {
-            content:"";
-            position:absolute;
-            inset:0;
-            background: linear-gradient(105deg, rgba(255,255,255,0.03) 0%, transparent 50%);
-            pointer-events:none;
-        }
-        @media (max-width: 1200px) {
-            .block-container { padding-left: 0.9rem; padding-right: 0.9rem; }
-            .page-shell { padding: 1.15rem; }
-        }
-        /* Ensure vertical stacking inside columns always has breathing room */
+
+        /* ── Layout helpers ──────────────────────────────────── */
         div[data-testid="stVerticalBlock"] > div[data-testid="stVerticalBlockBorderWrapper"] {
             margin-bottom: 0 !important;
         }
         div[data-testid="stHorizontalBlock"] {
             align-items: flex-start !important;
-            gap: 1.35rem !important;
+            gap: 1.25rem !important;
         }
         div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stMarkdownContainer"]),
         div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stPlotlyChart"]),
         div[data-testid="stVerticalBlock"] > div:has(> div[data-testid="stDataFrame"]) {
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.3rem;
         }
-        div[data-testid="stPlotlyChart"] {
-            margin-top: 0.55rem;
-            margin-bottom: 0.2rem;
+        div[data-testid="stPlotlyChart"] { margin-top: 0.4rem; margin-bottom: 0.1rem; }
+
+        /* ── Responsive ──────────────────────────────────────── */
+        @media (max-width: 1200px) {
+            .block-container { padding-left: 0.9rem; padding-right: 0.9rem; }
         }
         @media (max-width: 768px) {
-            .block-container { padding-top: 0.6rem; padding-left: 0.7rem; padding-right: 0.7rem; }
-            .page-title { line-height: 1.02; }
-            .page-shell { border-radius: 20px; }
-            .panel, .metric-panel, .sidebar-kpi { border-radius: 18px; }
-            div[data-testid="stHorizontalBlock"] { gap: 0.8rem !important; }
+            .block-container { padding-top: 0.5rem; padding-left: 0.65rem; padding-right: 0.65rem; }
+            .page-title { font-size: 1.65rem; }
+            .page-shell, .panel, .metric-panel { border-radius: 9px; }
+            div[data-testid="stHorizontalBlock"] { gap: 0.75rem !important; }
         }
         </style>
         """
@@ -673,7 +604,6 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
                     <div class="brand-sub">Supply Chain Intelligence</div>
                 </div>
             </div>
-            <div class="security-pill">System Operational</div>
             """,
             unsafe_allow_html=True,
         )
@@ -693,15 +623,6 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
                 """,
                 unsafe_allow_html=True,
             )
-        st.markdown(
-            """
-            <div class="status-strip" style="margin-top:0.25rem; margin-bottom:0.85rem;">
-                <div class="status-item"><span class="status-dot"></span>Live Workspace</div>
-                <div class="status-item">Adaptive Layout</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
         _page_link("streamlit_app.py", PAGE_TITLES["overview"], ":material/dashboard:", active_key == "overview")
         _page_link("pages/1_Forecast_Explorer.py", PAGE_TITLES["forecast"], ":material/query_stats:", active_key == "forecast")
         _page_link("pages/2_Inventory_Decisions.py", PAGE_TITLES["inventory"], ":material/inventory_2:", active_key == "inventory")
@@ -710,8 +631,7 @@ def render_sidebar(active_key: str, data: Optional[dict] = None) -> None:
         _page_link("pages/5_Backtesting.py", PAGE_TITLES["backtesting"], ":material/history:", active_key == "backtesting")
         _page_link("pages/6_Scenario_Simulator.py", PAGE_TITLES["scenario"], ":material/tune:", active_key == "scenario")
         st.divider()
-        st.button("Run New Scenario", width="stretch")
-        st.caption(f"Theme: {st.session_state.get('theme_mode', 'dark').title()} · Responsive dashboard")
+        st.caption(f"Theme: {st.session_state.get('theme_mode', 'dark').title()}")
 
 
 def render_header(kicker: str, title: str, subtitle: str) -> None:
@@ -723,11 +643,6 @@ def render_header(kicker: str, title: str, subtitle: str) -> None:
                 <div class="page-kicker">{kicker}</div>
                 <div class="page-title">{title}</div>
                 <div class="page-subtitle">{subtitle}</div>
-                <div class="hero-badges">
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Clear business summary</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Simple action guidance</div>
-                    <div class="hero-badge"><span class="hero-badge-dot"></span>Desktop and mobile ready</div>
-                </div>
             </div>
             """,
             unsafe_allow_html=True,
@@ -744,24 +659,6 @@ def render_header(kicker: str, title: str, subtitle: str) -> None:
             st.session_state["theme_mode"] = desired_theme
             st.rerun()
 
-        st.markdown(
-            """
-            <div class="hero-side">
-                <div class="glass-card">
-                    <div class="glass-label">Interface Mode</div>
-                    <div class="glass-value">Executive View</div>
-                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Designed to highlight what changed, what matters, and what to do next</div>
-                </div>
-                <div class="glass-card">
-                    <div class="glass-label">Operational Status</div>
-                    <div class="glass-value">Live planning view</div>
-                    <div class="page-meta-bottom" style="margin-top:0.35rem;">Forecast, stock, and warehouse signals shown in the same business language</div>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
 
 def metric_panel(label: str, value: str, detail: str) -> str:
     return (
@@ -769,32 +666,50 @@ def metric_panel(label: str, value: str, detail: str) -> str:
         f'<div class="metric-label">{label}</div>'
         f'<div class="metric-value">{value}</div>'
         f'<div class="metric-detail">{detail}</div>'
-        '<div class="metric-chip">Business Snapshot</div>'
         "</div>"
     )
 
 
 def style_plotly(fig, height: int = 320):
     theme = _get_theme_palette()
-    plotly_theme = {
-        "paper_bgcolor": theme["plot_bg"],
-        "plot_bgcolor": theme["plot_bg"],
-        "font": {"family": "IBM Plex Sans, sans-serif", "color": theme["plot_text"]},
-        "legend": {
-            "font": {"color": theme["muted"], "size": 11},
-            "bgcolor": "rgba(255,255,255,0.03)",
-            "bordercolor": theme["plot_grid"],
-            "borderwidth": 1,
+    tick_font = {"color": theme["plot_tick"], "size": 11, "family": "IBM Plex Mono, monospace"}
+    fig.update_layout(
+        height=height,
+        margin=dict(l=4, r=8, t=24, b=8),
+        paper_bgcolor=theme["plot_bg"],
+        plot_bgcolor=theme["plot_bg"],
+        font={"family": "IBM Plex Sans, sans-serif", "color": theme["plot_text"], "size": 12},
+        legend={
+            "font": {"color": theme["muted"], "size": 10, "family": "IBM Plex Sans, sans-serif"},
+            "bgcolor": "rgba(255,255,255,0)",
+            "borderwidth": 0,
             "orientation": "h",
             "x": 0,
-            "y": 1.08,
+            "y": 1.06,
             "itemclick": False,
             "itemdoubleclick": False,
         },
-    }
-    fig.update_layout(height=height, margin=dict(l=10, r=10, t=30, b=10), **plotly_theme)
-    fig.update_xaxes(showgrid=True, gridcolor=theme["plot_grid"], zeroline=False, linecolor=theme["plot_line"], tickfont={"color": theme["plot_tick"]})
-    fig.update_yaxes(showgrid=True, gridcolor=theme["plot_grid"], zeroline=False, linecolor=theme["plot_line"], tickfont={"color": theme["plot_tick"]})
+        hoverlabel={
+            "bgcolor": theme["surface_2"],
+            "bordercolor": theme["line_strong"],
+            "font": {"family": "IBM Plex Sans, sans-serif", "size": 12, "color": theme["text"]},
+        },
+    )
+    fig.update_xaxes(
+        showgrid=False,
+        zeroline=False,
+        linecolor=theme["plot_line"],
+        tickfont=tick_font,
+        title_font={"color": theme["muted"], "size": 11},
+    )
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor=theme["plot_grid"],
+        zeroline=False,
+        linecolor="rgba(0,0,0,0)",
+        tickfont=tick_font,
+        title_font={"color": theme["muted"], "size": 11},
+    )
     return fig
 
 
@@ -802,7 +717,10 @@ def compact_legend(items: list[tuple[str, str]]) -> str:
     parts = []
     for label, color in items:
         parts.append(
-            f"<div class='legend-item'><span class='legend-swatch' style='background:{color};'></span>{label}</div>"
+            f"<div class='legend-item'>"
+            f"<span class='legend-swatch' style='background:{color};border-radius:2px;'></span>"
+            f"{label}"
+            f"</div>"
         )
     return "<div class='legend-rail'>" + "".join(parts) + "</div>"
 
@@ -817,7 +735,7 @@ def status_rail(items: list[tuple[str, str]]) -> str:
 
 
 def dense_dataframe(df, height: int = 320):
-    st.dataframe(df, width="stretch", hide_index=True, height=height)
+    st.dataframe(df, use_container_width=True, hide_index=True, height=height)
 
 
 def _logo_data_uri() -> str:
@@ -867,85 +785,87 @@ def _page_link(page: str, label: str, icon: str, disabled: bool) -> None:
 def _get_theme_palette() -> dict[str, str]:
     mode = st.session_state.get("theme_mode", "dark")
     if mode == "light":
+        # Cloud White — clean, high-contrast light theme
         return {
-            "bg": "#f1f5fa",
-            "bg_soft": "#f8fbff",
-            "surface": "#ffffff",
-            "surface_2": "#f4f7fb",
-            "surface_3": "#edf2f8",
-            "line": "rgba(15, 30, 60, 0.09)",
-            "line_strong": "rgba(15, 30, 60, 0.16)",
-            "text": "#0f172a",
-            "muted": "#64748b",
-            "muted_2": "#94a3b8",
-            "accent": "#1d4ed8",
-            "accent_2": "#3b82f6",
-            "accent_soft": "rgba(29, 78, 216, 0.08)",
-            "good": "#059669",
-            "warn": "#d97706",
-            "bad": "#dc2626",
-            "shadow": "rgba(15, 30, 60, 0.06)",
-            "card_glow": "rgba(29, 78, 216, 0.07)",
-            "app_grad_a": "rgba(29, 78, 216, 0.05)",
-            "app_grad_b": "rgba(14, 165, 233, 0.04)",
-            "app_grad_c": "#f8faff",
-            "sidebar_grad_a": "#fdfeff",
-            "sidebar_grad_b": "#f3f7fc",
-            "hero_grad_a": "rgba(255,255,255,0.97)",
-            "hero_grad_b": "rgba(247,250,255,0.97)",
-            "hero_grad_c": "rgba(240,246,254,0.98)",
-            "panel_grad_a": "rgba(255,255,255,1)",
-            "panel_grad_b": "rgba(248,251,255,1)",
-            "metric_grad_a": "rgba(255,255,255,1)",
-            "metric_grad_b": "rgba(246,250,255,1)",
+            "bg": "#eef3f9",           # page background: slightly blue-tinted off-white
+            "bg_soft": "#f5f8fc",
+            "surface": "#ffffff",      # panels: pure white — clear lift above bg
+            "surface_2": "#f4f8fd",    # nested/hover surfaces
+            "surface_3": "#eaf0f8",
+            "line": "rgba(15, 35, 75, 0.1)",
+            "line_strong": "rgba(15, 35, 75, 0.18)",
+            "text": "#0d1828",         # near-black with blue undertone
+            "muted": "#52698a",        # readable but clearly secondary
+            "muted_2": "#8ba0bc",
+            "accent": "#1d4ed8",       # blue-700 — authoritative
+            "accent_2": "#2563eb",     # blue-600
+            "accent_soft": "rgba(29, 78, 216, 0.07)",
+            "good": "#16a34a",
+            "warn": "#c2410c",
+            "bad": "#b91c1c",
+            "shadow": "rgba(10, 25, 60, 0.07)",
+            "card_glow": "rgba(29, 78, 216, 0.06)",
+            "app_grad_a": "rgba(29, 78, 216, 0.04)",
+            "app_grad_b": "rgba(14, 165, 233, 0.03)",
+            "app_grad_c": "#f5f8fc",
+            "sidebar_grad_a": "#f0f5fb",  # sidebar: slightly different from page bg
+            "sidebar_grad_b": "#e8f0f9",
+            "hero_grad_a": "#edf4ff",     # hero sections: clean blue-tinted white
+            "hero_grad_b": "#e8f1fd",
+            "hero_grad_c": "#e2ecfb",
+            "panel_grad_a": "#ffffff",
+            "panel_grad_b": "#ffffff",
+            "metric_grad_a": "#ffffff",
+            "metric_grad_b": "#ffffff",
             "input_bg": "#ffffff",
-            "table_head": "#f4f8fc",
+            "table_head": "#f0f5fb",
             "table_body": "#ffffff",
-            "table_hover": "#f7faff",
-            "plot_bg": "rgba(255,255,255,0)",
-            "plot_text": "#0f172a",
-            "plot_grid": "rgba(15, 30, 60, 0.08)",
-            "plot_line": "rgba(15, 30, 60, 0.13)",
-            "plot_tick": "#64748b",
+            "table_hover": "#f5f9ff",
+            "plot_bg": "rgba(0,0,0,0)",
+            "plot_text": "#0d1828",
+            "plot_grid": "rgba(15, 35, 75, 0.07)",
+            "plot_line": "rgba(15, 35, 75, 0.12)",
+            "plot_tick": "#52698a",
         }
+    # Carbon Navy — precise dark theme
     return {
-        "bg": "#020b1a",
-        "bg_soft": "#06111f",
-        "surface": "#0a1628",
-        "surface_2": "#0d1c32",
-        "surface_3": "#10223c",
-        "line": "rgba(80, 120, 190, 0.17)",
-        "line_strong": "rgba(100, 148, 210, 0.28)",
-        "text": "#e4eeff",
-        "muted": "#7a9bbf",
-        "muted_2": "#506882",
-        "accent": "#2563eb",
-        "accent_2": "#60a5fa",
-        "accent_soft": "rgba(37, 99, 235, 0.12)",
-        "good": "#34d399",
-        "warn": "#fb923c",
-        "bad": "#f87171",
-        "shadow": "rgba(0, 0, 0, 0.32)",
-        "card_glow": "rgba(37, 99, 235, 0.18)",
-        "app_grad_a": "rgba(37, 99, 235, 0.10)",
-        "app_grad_b": "rgba(14, 165, 233, 0.07)",
-        "app_grad_c": "#030c1c",
-        "sidebar_grad_a": "#020a18",
-        "sidebar_grad_b": "#071020",
-        "hero_grad_a": "rgba(17, 32, 60, 0.97)",
-        "hero_grad_b": "rgba(10, 22, 44, 0.97)",
-        "hero_grad_c": "rgba(6, 14, 30, 0.99)",
-        "panel_grad_a": "rgba(13, 23, 42, 0.97)",
-        "panel_grad_b": "rgba(8, 16, 32, 0.99)",
-        "metric_grad_a": "rgba(12, 22, 40, 0.97)",
-        "metric_grad_b": "rgba(7, 14, 28, 0.99)",
-        "input_bg": "#0c1826",
-        "table_head": "#0d1c2e",
-        "table_body": "#0a1726",
-        "table_hover": "#0f1f34",
+        "bg": "#080e1b",           # base: very dark blue-black
+        "bg_soft": "#0c1220",
+        "surface": "#0f1825",      # panels: clearly elevated above bg
+        "surface_2": "#141f2e",    # hover/nested surfaces
+        "surface_3": "#192638",
+        "line": "rgba(75, 125, 195, 0.15)",
+        "line_strong": "rgba(105, 160, 225, 0.26)",
+        "text": "#dce8f8",         # cool near-white
+        "muted": "#6788a8",        # readable secondary text
+        "muted_2": "#3d5a78",
+        "accent": "#3b82f6",       # blue-500 — airy and readable
+        "accent_2": "#60a5fa",     # blue-400
+        "accent_soft": "rgba(59, 130, 246, 0.1)",
+        "good": "#22c55e",
+        "warn": "#f97316",
+        "bad": "#ef4444",
+        "shadow": "rgba(0, 0, 0, 0.3)",
+        "card_glow": "rgba(59, 130, 246, 0.14)",
+        "app_grad_a": "rgba(59, 130, 246, 0.07)",
+        "app_grad_b": "rgba(14, 165, 233, 0.05)",
+        "app_grad_c": "#060c18",
+        "sidebar_grad_a": "#070c18",   # sidebar: fractionally darker than bg
+        "sidebar_grad_b": "#070c18",
+        "hero_grad_a": "#101c30",      # hero sections: slight blue lift
+        "hero_grad_b": "#0c1628",
+        "hero_grad_c": "#091320",
+        "panel_grad_a": "#0f1825",     # same as surface — flat, clean panels
+        "panel_grad_b": "#0f1825",
+        "metric_grad_a": "#0f1825",
+        "metric_grad_b": "#0f1825",
+        "input_bg": "#0c1724",
+        "table_head": "#0c1828",
+        "table_body": "#0d1a26",
+        "table_hover": "#121f2e",
         "plot_bg": "rgba(0,0,0,0)",
-        "plot_text": "#dde5ff",
-        "plot_grid": "rgba(85, 110, 160, 0.11)",
-        "plot_line": "rgba(85, 110, 160, 0.17)",
-        "plot_tick": "#7a8fb0",
+        "plot_text": "#bfd0e8",
+        "plot_grid": "rgba(90, 130, 175, 0.12)",
+        "plot_line": "rgba(90, 130, 175, 0.18)",
+        "plot_tick": "#6788a8",
     }

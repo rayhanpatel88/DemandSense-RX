@@ -158,7 +158,7 @@ with left:
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Live Warehouse Map")
     st.caption("This view shows where robots are moving and where aisles are getting crowded.")
-    st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     if not tasks.empty:
@@ -168,7 +168,7 @@ with left:
         zone_fig.update_layout(showlegend=False, xaxis_title="Zone", yaxis_title="Number of picking jobs")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Workload By Zone")
-        st.plotly_chart(zone_fig, width="stretch")
+        st.plotly_chart(zone_fig, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -177,7 +177,7 @@ with right:
     heatmap = style_plotly(heatmap, 280)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Where Traffic Is Building Up")
-    st.plotly_chart(heatmap, width="stretch")
+    st.plotly_chart(heatmap, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown('<div class="panel">', unsafe_allow_html=True)
@@ -219,7 +219,7 @@ with bottom_left:
                 "status": "Current Status",
             }
         )
-        st.dataframe(robot_status, width="stretch", hide_index=True, height=310)
+        st.dataframe(robot_status, use_container_width=True, hide_index=True, height=310)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with bottom_right:
@@ -237,5 +237,5 @@ with bottom_right:
         queue_fig.update_layout(xaxis_title="Waiting time before work starts", yaxis_title="Total time to complete the job")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("How Waiting Time Affects Completion Time")
-        st.plotly_chart(queue_fig, width="stretch")
+        st.plotly_chart(queue_fig, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)

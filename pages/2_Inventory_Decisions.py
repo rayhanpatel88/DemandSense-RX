@@ -85,19 +85,14 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-st.markdown(
-    f"""
-    <div class="panel">
-        <div class="page-kicker" style="margin-bottom:0.45rem;">How We Flag A Shortage</div>
-        <div class="note" style="color:var(--text);">
-            Shortage risk is based on <strong>current stock</strong>, <strong>forecast demand</strong>, <strong>lead time</strong>, and the <strong>service level target</strong>.<br>
-            For <strong>{focus['sku']}</strong>, the app compares current stock of <strong>{focus['current_stock']:.0f}</strong> units against expected demand while waiting <strong>{int(focus['lead_time_days'])}</strong> days for replenishment.<br>
-            The reorder point is <strong>{focus['reorder_point']:.0f}</strong> units. The suggested order quantity is <strong>{focus['reorder_qty']:.0f}</strong> units. The current shortage estimate is <strong>{focus['shortage_units']:.0f}</strong> units.
-        </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+with st.expander(f"How shortage risk is calculated · {focus['sku']}"):
+    st.markdown(
+        f"Shortage risk is based on **current stock**, **forecast demand**, **lead time**, and the **service level target**. "
+        f"For **{focus['sku']}**, current stock of **{focus['current_stock']:.0f}** units is compared against expected demand "
+        f"during a **{int(focus['lead_time_days'])}-day** replenishment window. "
+        f"Reorder point: **{focus['reorder_point']:.0f}** units · Suggested order: **{focus['reorder_qty']:.0f}** units · "
+        f"Estimated shortage: **{focus['shortage_units']:.0f}** units."
+    )
 
 for col, html in zip(
     st.columns(4),
@@ -146,9 +141,9 @@ with left:
 
     risky = inventory_df.sort_values(["reorder_needed", "days_to_stockout"], ascending=[False, True]).head(10)
     compare = go.Figure()
-    compare.add_trace(go.Bar(x=risky["sku"], y=risky["current_stock"], name="Current stock", marker_color="#8bd7bd"))
+    compare.add_trace(go.Bar(x=risky["sku"], y=risky["current_stock"], name="Current stock", marker_color="#22c55e"))
     compare.add_trace(go.Bar(x=risky["sku"], y=risky["reorder_point"], name="Reorder point", marker_color="#f97316"))
-    compare.add_trace(go.Bar(x=risky["sku"], y=risky["target_stock"], name="Target stock", marker_color="#94a3b8"))
+    compare.add_trace(go.Bar(x=risky["sku"], y=risky["target_stock"], name="Target stock", marker_color="#64748b"))
     compare = style_plotly(compare, 350)
     compare.update_layout(showlegend=False, barmode="group", xaxis_title="", yaxis_title="Units in stock")
     st.markdown('<div class="panel">', unsafe_allow_html=True)
@@ -157,14 +152,14 @@ with left:
     st.markdown(
         compact_legend(
             [
-                ("Current stock", "#8bd7bd"),
+                ("Current stock", "#22c55e"),
                 ("Reorder point", "#f97316"),
-                ("Target stock", "#94a3b8"),
+                ("Target stock", "#64748b"),
             ]
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(compare, width="stretch")
+    st.plotly_chart(compare, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
 with right:
@@ -190,21 +185,21 @@ with right:
         x="date",
         y="projected_stock",
         color="sku",
-        color_discrete_sequence=["#a39afc", "#8bd7bd", "#ffc57f", "#f4f0ff", "#ff8d9f"],
+        color_discrete_sequence=["#3b82f6", "#22c55e", "#f97316", "#a78bfa", "#f43f5e"],
     )
     line = style_plotly(line, 355)
     line.update_layout(showlegend=False, yaxis_title="Expected stock on hand", xaxis_title="")
-    line.add_hline(y=0, line_color="#dc2626", line_dash="dot", opacity=0.85)
+    line.add_hline(y=0, line_color="#ef4444", line_dash="dot", opacity=0.7, line_width=1)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Projected Stock Run-Down")
     st.caption("These lines show how quickly stock is expected to fall if demand continues as forecast. The red line marks the stockout point.")
     st.markdown(
         compact_legend(
-            [(sku, color) for sku, color in zip(top_timeline["sku"].drop_duplicates().tolist(), ["#a39afc", "#8bd7bd", "#ffc57f", "#f4f0ff", "#ff8d9f"])]
+            [(sku, color) for sku, color in zip(top_timeline["sku"].drop_duplicates().tolist(), ["#3b82f6", "#22c55e", "#f97316", "#a78bfa", "#f43f5e"])]
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(line, width="stretch")
+    st.plotly_chart(line, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     risk_mix = inventory_df["stockout_risk"].value_counts().rename_axis("risk").reset_index(name="count")
@@ -213,7 +208,7 @@ with right:
         x="risk",
         y="count",
         color="risk",
-        color_discrete_map={"critical": "#ff8d9f", "high": "#ffc57f", "medium": "#a39afc", "low": "#8bd7bd"},
+        color_discrete_map={"critical": "#ef4444", "high": "#f97316", "medium": "#eab308", "low": "#22c55e"},
     )
     risk_fig = style_plotly(risk_fig, 270)
     risk_fig.update_xaxes(categoryorder="array", categoryarray=["critical", "high", "medium", "low"])
@@ -221,5 +216,5 @@ with right:
     risk_fig.update_traces(marker_line_color="rgba(255,255,255,0.3)", marker_line_width=0.8)
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Number Of Products In Each Risk Band")
-    st.plotly_chart(risk_fig, width="stretch")
+    st.plotly_chart(risk_fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)

@@ -108,7 +108,7 @@ chart.add_trace(
         y=sku_hist["demand"],
         mode="lines",
         name="History",
-        line=dict(color="#a39afc", width=2.1),
+        line=dict(color="#4b6480", width=1.8),
     )
 )
 if not sku_test.empty:
@@ -118,7 +118,7 @@ if not sku_test.empty:
             y=sku_test["forecast"],
             mode="lines",
             name="Holdout forecast",
-            line=dict(color="#8bd7bd", width=1.9, dash="dot"),
+            line=dict(color="#22c55e", width=1.8, dash="dot"),
         )
     )
 if not sku_future.empty:
@@ -128,8 +128,8 @@ if not sku_future.empty:
             y=sku_future["forecast"],
             mode="lines+markers",
             name="Forward forecast",
-            line=dict(color="#f4f0ff", width=2.4),
-            marker=dict(size=5, color="#c7c2ff"),
+            line=dict(color="#3b82f6", width=2.2),
+            marker=dict(size=4, color="#60a5fa"),
         )
     )
 if show_bands and not sku_future.empty:
@@ -138,12 +138,12 @@ if show_bands and not sku_future.empty:
             x=list(sku_future["date"]) + list(sku_future["date"])[::-1],
             y=list(sku_future["upper"]) + list(sku_future["lower"])[::-1],
             fill="toself",
-            fillcolor="rgba(143,132,255,0.14)",
+            fillcolor="rgba(59,130,246,0.1)",
             line=dict(color="rgba(0,0,0,0)"),
             name="Prediction interval",
         )
     )
-chart.add_vline(x=data["train_cutoff"], line_color="#ffc57f", line_dash="dash")
+chart.add_vline(x=data["train_cutoff"], line_color="#f97316", line_dash="dash", line_width=1)
 chart = style_plotly(chart, 470)
 chart.update_layout(showlegend=False, yaxis_title="Units sold", xaxis_title="")
 
@@ -154,15 +154,15 @@ with left:
     st.markdown(
         compact_legend(
             [
-                ("History", "#a39afc"),
-                ("Holdout forecast", "#8bd7bd"),
-                ("Forward forecast", "#f4f0ff"),
-                ("Interval", "#8f84ff"),
+                ("History", "#4b6480"),
+                ("Holdout forecast", "#22c55e"),
+                ("Forward forecast", "#3b82f6"),
+                ("Interval", "rgba(59,130,246,0.3)"),
             ]
         ),
         unsafe_allow_html=True,
     )
-    st.plotly_chart(chart, width="stretch")
+    st.plotly_chart(chart, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     table = sku_future[["date", "forecast", "lower", "upper", "promotion", "price"]].copy()
@@ -214,19 +214,19 @@ with right:
     if not recent.empty:
         recent["abs_error"] = (recent["demand"] - recent["forecast"]).abs()
         error_chart = go.Figure()
-        error_chart.add_trace(go.Bar(x=recent["date"], y=recent["abs_error"], marker_color="#ff8d9f", name="Absolute error"))
+        error_chart.add_trace(go.Bar(x=recent["date"], y=recent["abs_error"], marker_color="#ef4444", name="Absolute error"))
         error_chart = style_plotly(error_chart, 285)
         error_chart.update_layout(showlegend=False, yaxis_title="Units missed", xaxis_title="")
         st.markdown('<div class="panel">', unsafe_allow_html=True)
         st.subheader("Recent Forecast Misses")
-        st.plotly_chart(error_chart, width="stretch")
+        st.plotly_chart(error_chart, use_container_width=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
     assumptions = sku_future[["promotion", "price"]].copy()
     assumptions["step"] = range(1, len(assumptions) + 1)
     assumption_chart = go.Figure()
-    assumption_chart.add_trace(go.Scatter(x=assumptions["step"], y=assumptions["price"], mode="lines", name="Price", line=dict(color="#ffc57f", width=2)))
-    assumption_chart.add_trace(go.Bar(x=assumptions["step"], y=assumptions["promotion"], name="Promotion", marker_color="rgba(143,132,255,0.48)", yaxis="y2"))
+    assumption_chart.add_trace(go.Scatter(x=assumptions["step"], y=assumptions["price"], mode="lines", name="Price", line=dict(color="#f97316", width=1.8)))
+    assumption_chart.add_trace(go.Bar(x=assumptions["step"], y=assumptions["promotion"], name="Promotion", marker_color="rgba(59,130,246,0.35)", yaxis="y2"))
     assumption_chart = style_plotly(assumption_chart, 285)
     assumption_chart.update_layout(
         showlegend=False,
@@ -236,5 +236,5 @@ with right:
     )
     st.markdown('<div class="panel">', unsafe_allow_html=True)
     st.subheader("Price And Promotion Assumptions")
-    st.plotly_chart(assumption_chart, width="stretch")
+    st.plotly_chart(assumption_chart, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
